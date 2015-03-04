@@ -12,7 +12,7 @@ var handleInternalLinks = function() {
     event.preventDefault();
     var hash = '#' + gistId + $(this).attr('href');
     handleNewScene(hash);
-    window.history.pushState(null, null, '/' + hash);
+    window.history.pushState(null, null, document.location.pathname + hash);
   });
 };
 
