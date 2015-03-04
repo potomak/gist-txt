@@ -71,6 +71,7 @@ $(function() {
   var scene = parse(document.location.hash);
 
   $.getJSON('https://api.github.com/gists/' + gistId).done(function(gist) {
+    $('a#source').attr('href', 'https://gist.github.com/' + gistId).html(gistId);
     files = gist.files;
     loadAndRender(scene);
   });
