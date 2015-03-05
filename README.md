@@ -25,7 +25,7 @@ Links between scenes are absolute links to the scene name.
 Example: to make the string "go to the city" a link to the *city* scene add the markdown code:
 
 ```markdown
-[go the city](/city)
+[go to the city](/city)
 ```
 
 ## Hosting
