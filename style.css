@@ -1,7 +1,3 @@
-html {
-  min-width: 1040px;
-}
-
 body {
   font-family: Georgia, serif;
   margin: 1em auto 4em auto;
@@ -53,6 +49,16 @@ pre {
   margin: 2em 0 2em -20px;
   width: 960px;
   overflow-x: auto;
+}
+
+@media screen and (min-width:0) and (max-width:825px) {
+  body {
+    margin: 1em 20px 4em 20px;
+  }
+
+  body, p, blockquote, li, pre {
+    width: auto;
+  }
 }
 
 #loading,
