@@ -122,7 +122,7 @@ var init = function() {
 var gistId;
 var files;
 var cache = {};
-var VERSION = '1.0.0';
+var VERSION = '1.1.0';
 
 // Start the engine
 $(init);
