@@ -14,7 +14,7 @@ var handleNewScene = function(hash) {
 var handleInternalLinks = function() {
   $('a[rel=internal]').click(function(event) {
     event.preventDefault();
-    var hash = '#' + gistId + $(this).attr('href');
+    var hash = '#' + gistId + '/' + $(this).attr('href');
     handleNewScene(hash);
     window.history.pushState(null, null, document.location.pathname + hash);
   });
