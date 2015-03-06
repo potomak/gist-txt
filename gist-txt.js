@@ -104,6 +104,7 @@ var init = function() {
   $.getJSON('https://api.github.com/gists/' + gistId)
     .done(function(gist) {
       $('a#source').attr('href', 'https://gist.github.com/' + gistId).html(gistId);
+      $('span#version').html(VERSION);
       $('footer').show();
       files = gist.files;
       loadAndRender(scene);
@@ -116,6 +117,7 @@ var init = function() {
 
 var gistId;
 var files;
+var VERSION = '1.0.0';
 
 // Start the engine
 $(init);
