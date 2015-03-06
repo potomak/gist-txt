@@ -23,7 +23,7 @@ Example: the file `city.markdown` is the *city* scene.
 
 ### Links
 
-Links between scenes are absolute links to the scene name.
+Links between scenes are relative links to the scene name.
 
 Example: to make the string "go to the city" a link to the *city* scene add the
 markdown code:
