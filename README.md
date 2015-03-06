@@ -10,7 +10,7 @@ This project has been inspired by [Twine](http://twinery.org/) and
 Create a new public gist at https://gist.github.com/.
 
 The gist should contain at least an `index.markdown` file used as a starting
-point for your text adventure.
+point for your text adventure, also called the *main scene*.
 
 See more about markdown syntax at
 http://daringfireball.net/projects/markdown/syntax.
@@ -29,7 +29,13 @@ Example: to make the string "go to the city" a link to the *city* scene add the
 markdown code:
 
 ```markdown
-[go to the city](/city)
+[go to the city](city)
+```
+
+You can make links to the *main scene* using the `index` name, example:
+
+```markdown
+[Restart the game](index)
 ```
 
 ## Hosting
