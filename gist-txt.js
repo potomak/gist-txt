@@ -11,8 +11,8 @@ var handleNewScene = function(hash) {
   loadAndRender(scene);
 };
 
-var handleInternalLinks = function() {
-  $('a[rel=internal]').click(function(event) {
+var handleInternalLinks = function(contentElement) {
+  contentElement.find('a').click(function(event) {
     event.preventDefault();
     var hash = '#' + gistId + '/' + $(this).attr('href');
     handleNewScene(hash);
@@ -20,18 +20,15 @@ var handleInternalLinks = function() {
   });
 };
 
-var updateContentLinks = function() {
+var cacheContent = function(scene, contentElement) {
   return $.Deferred(function(defer) {
-    $('#content a').attr('rel', 'internal');
-    defer.resolve();
-  });
+    cache[scene] = contentElement.html();
+    defer.resolve(contentElement);
+  }).promise();
 };
 
 var renderPage = function(content) {
-  return $.Deferred(function(defer) {
-    $('#content').html(content);
-    defer.resolve();
-  }).promise();
+  return $('#content').html(content).promise();
 };
 
 var getFileContent = function(scene) {
@@ -64,10 +61,17 @@ var loadAndRender = function(scene) {
   toggleError(false);
   toggleLoading(true);
 
-  return getFileContent(scene)
-    .then(render)
-    .then(renderPage)
-    .then(updateContentLinks)
+  var promise;
+  if (typeof cache[scene] !== 'undefined') {
+    promise = renderPage(cache[scene]);
+  } else {
+    promise = getFileContent(scene)
+      .then(render)
+      .then(renderPage)
+      .then(cacheContent.bind(this, scene))
+  }
+
+  promise
     .then(handleInternalLinks)
     .fail(function(errorMessage) {
       toggleError(true, errorMessage);
@@ -117,6 +121,7 @@ var init = function() {
 
 var gistId;
 var files;
+var cache = {};
 var VERSION = '1.0.0';
 
 // Start the engine
