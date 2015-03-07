@@ -1,20 +1,25 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<style>
-  @import url("style.css");
-</style>
+<head>
+  <title>gist-txt</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @import url("style.css");
+  </style>
+</head>
+<body>
+  <div id="error"></div>
+  <div id="loading">Loading...</div>
+  <div id="content"></div>
 
-<div id="error"></div>
-<div id="loading">Loading...</div>
-<div id="content"></div>
+  <script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
+  <script src="gist-txt.js"></script>
 
-<script src="//code.jquery.com/jquery-2.1.3.min.js"></script>
-<script src="gist-txt.js"></script>
-
-<footer>
-  Source: <a id="source"></a>
-  <br>
-  Created with <a href="https://github.com/potomak/gist-txt">gist-txt</a>
-  version <span id="version"></span>
-  by <a rel="author" href="http://twitter.com/johnnyaboh">Giovanni Cappellotto</a>
-</footer>
+  <footer>
+    Source: <a id="source"></a>
+    <br>
+    Created with <a href="https://github.com/potomak/gist-txt">gist-txt</a>
+    version <span id="version"></span>
+    by <a rel="author" href="http://twitter.com/johnnyaboh">Giovanni Cappellotto</a>
+  </footer>
+</body>

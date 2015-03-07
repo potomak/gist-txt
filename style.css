@@ -1,7 +1,8 @@
 body {
   font-family: Georgia, serif;
   margin: 1em auto 4em auto;
-  width: 960px;
+  width: 720px;
+  color: #222;
 }
 
 h1, h2, h3, h4 {
@@ -15,15 +16,10 @@ footer {
 
 p {
   line-height: 1.5em;
-  width: 720px;
 }
 
-blockquote {
-  width: 640px;
-}
-
-li {
-  width: 680px;
+blockquote, footer {
+  color: #444;
 }
 
 a {
@@ -34,30 +30,30 @@ a:not(:hover) {
   text-decoration: none;
 }
 
-pre, code, textarea {
+pre, code {
   font-family: monospace;
   line-height: normal;
-}
-
-textarea {
-  font-size: 100%;
 }
 
 pre {
   border-left: solid 2px #ccc;
   padding-left: 18px;
   margin: 2em 0 2em -20px;
-  width: 960px;
   overflow-x: auto;
 }
 
-@media screen and (min-width:0) and (max-width:825px) {
+@media screen and (max-width:825px) {
   body {
     margin: 1em 20px 4em 20px;
+    width: auto;
   }
 
-  body, p, blockquote, li, pre {
-    width: auto;
+  pre {
+    margin-left: 0;
+  }
+
+  img, video, canvas {
+    max-width: 100%;
   }
 }
 
