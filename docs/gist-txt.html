@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <title>gist-txt.js</title>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
+  <link rel="stylesheet" media="all" href="docco.css" />
+</head>
+<body>
+  <div id="container">
+    <div id="background"></div>
+    
+    <ul class="sections">
+        
+          <li id="title">
+              <div class="annotation">
+                  <h1>gist-txt.js</h1>
+              </div>
+          </li>
+        
+        
+        
+        <li id="section-1">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-1">&#182;</a>
+              </div>
+              <p>Gist-txt is a minimal text adventure engine that helps game designers to
+create text adventures from GitHub gists.</p>
+<p>To create a new text adventure just create a new public gist at
+<a href="https://gist.github.com/">https://gist.github.com/</a> with at least a markdown file named
+<code>index.markdown</code>. This will be the <em>main scene</em>: the starting point of the
+adventure.</p>
+<p>Get more info at <a href="https://github.com/potomak/gist-txt">https://github.com/potomak/gist-txt</a>.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> gistId;
+<span class="hljs-keyword">var</span> files;
+<span class="hljs-keyword">var</span> cache = {};
+<span class="hljs-keyword">var</span> VERSION = <span class="hljs-string">'1.1.3'</span>;</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-2">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-2">&#182;</a>
+              </div>
+              <h2 id="initialization">Initialization</h2>
+<p>During the initialization stage the hash portion get parsed to extract two
+main information:</p>
+<ol>
+<li>gist id</li>
+<li>scene name</li>
+</ol>
+<p>Using the gist id a GET request to
+<a href="https://developer.github.com/v3/gists/#get-a-single-gist">https://developer.github.com/v3/gists/#get-a-single-gist</a> is made to get
+gist’s data.</p>
+<p>A successful request triggers the loading and rendering of the selected
+scene.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> init = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+  <span class="hljs-keyword">var</span> scene = parse(<span class="hljs-built_in">document</span>.location.hash);
+
+  $.getJSON(<span class="hljs-string">'https://api.github.com/gists/'</span> + gistId)
+    .done(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(gist)</span> </span>{
+      $(<span class="hljs-string">'a#source'</span>)
+        .attr(<span class="hljs-string">'href'</span>, <span class="hljs-string">'https://gist.github.com/'</span> + gistId)
+        .html(gistId);
+      $(<span class="hljs-string">'span#version'</span>).html(VERSION);
+      $(<span class="hljs-string">'footer'</span>).show();
+      files = gist.files;
+      loadAndRender(scene);
+    })
+    .fail(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(jsXHR)</span> </span>{
+      toggleLoading(<span class="hljs-literal">false</span>);
+      toggleError(<span class="hljs-literal">true</span>, jsXHR.statusText);
+    });
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2 id="loading-and-rendering-scenes">Loading and rendering scenes</h2>
+<p>The <code>cache</code> object is inspected to retrieve an already compiled scene file,
+otherwise the <em>load and render</em> process include:</p>
+<ol>
+<li>getting the raw content of the file sending a GET request to file’s
+<code>raw_url</code></li>
+<li>rendering the Markdown content sending a POST request to
+<a href="https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode">https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode</a></li>
+<li>output the rendered content to the HTML <code>div#content</code> element</li>
+<li>store a copy og the rendered content in the <code>cache</code> object</li>
+</ol>
+<p>The process continues adding <code>click</code> handlers to link in the content, to
+handle navigation between scenes.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> loadAndRender = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(scene)</span> </span>{
+  toggleError(<span class="hljs-literal">false</span>);
+  toggleLoading(<span class="hljs-literal">true</span>);
+
+  <span class="hljs-keyword">var</span> promise;
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> cache[scene] !== <span class="hljs-string">'undefined'</span>) {
+    promise = outputContent(cache[scene]);
+  } <span class="hljs-keyword">else</span> {
+    promise = getFileContent(scene)
+      .then(render)
+      .then(outputContent)
+      .then(cacheContent.bind(<span class="hljs-keyword">this</span>, scene))
+  }
+
+  promise
+    .then(handleInternalLinks)
+    .fail(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(errorMessage)</span> </span>{
+      toggleError(<span class="hljs-literal">true</span>, errorMessage);
+    })
+    .always(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
+      toggleLoading(<span class="hljs-literal">false</span>);
+    });
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Every scene is associated with a Markdown gist’s file in the form:</p>
+<pre><code>scene + <span class="hljs-string">'.markdown'</span>
+</code></pre><p>where <code>scene</code> is the name of the scene.</p>
+<p>A GET request to file’s <code>raw_url</code> is made and if successful it resolves the
+deferred object with the result content as argument of the callback.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> getFileContent = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(scene)</span> </span>{
+  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(defer)</span> </span>{
+    <span class="hljs-keyword">var</span> file = files[scene + <span class="hljs-string">'.markdown'</span>]
+
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> file === <span class="hljs-string">'undefined'</span>) {
+      defer.reject(<span class="hljs-string">'Scene not found'</span>);
+      <span class="hljs-keyword">return</span>;
+    }
+
+    $.get(file.raw_url)
+      .done(defer.resolve)
+      .fail(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(jsXHR)</span> </span>{
+        defer.reject(jsXHR.statusText);
+      });
+  }).promise();
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>To render a Markdown file it sends a POST request to
+<a href="https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode">https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode</a>
+and request’s associated promise is returned.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> render = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(markdown)</span> </span>{
+  <span class="hljs-keyword">return</span> $.ajax({
+    type: <span class="hljs-string">'POST'</span>,
+    url: <span class="hljs-string">'https://api.github.com/markdown/raw'</span>,
+    data: markdown,
+    contentType: <span class="hljs-string">'text/plain'</span>
+  });
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>The HTML rendered content is the main content of the scene and it gets
+outputed to the <code>#content</code> element in the DOM.</p>
+<p>The returning promise fulfills after the content has been inserted in the
+DOM.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> outputContent = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(content)</span> </span>{
+  <span class="hljs-keyword">return</span> $(<span class="hljs-string">'#content'</span>).html(content).promise();
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>Caching rendered content prevent waste of API calls and band for slow
+connections.</p>
+<p>The cache is composed by a simple JavaScript object that contains rendered
+content indexed by scene name.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> cacheContent = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(scene, contentElement)</span> </span>{
+  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(defer)</span> </span>{
+    cache[scene] = contentElement.html();
+    defer.resolve(contentElement);
+  }).promise();
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-8">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-8">&#182;</a>
+              </div>
+              <h2 id="scene-navigation">Scene navigation</h2>
+<p>Internal links click events are overridden to handle navigation between
+scenes of the text adventure.</p>
+<p><code>&lt;a&gt;</code> elements’ <code>href</code> attribute is used to rewrite location’s hash in the
+form:</p>
+<pre><code><span class="hljs-string">'#'</span> + gistId + <span class="hljs-string">'/'</span> + href
+</code></pre><p>At every internal link click event a new state get pushed in the
+<code>window.history</code> object to allow navigation using back and forward buttons.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> handleInternalLinks = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(contentElement)</span> </span>{
+  contentElement.find(<span class="hljs-string">'a'</span>).click(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event)</span> </span>{
+    event.preventDefault();
+    <span class="hljs-keyword">var</span> hash = <span class="hljs-string">'#'</span> + gistId + <span class="hljs-string">'/'</span> + $(<span class="hljs-keyword">this</span>).attr(<span class="hljs-string">'href'</span>);
+    runScene(hash);
+    <span class="hljs-built_in">window</span>.history.pushState(<span class="hljs-literal">null</span>, <span class="hljs-literal">null</span>, <span class="hljs-built_in">document</span>.location.pathname + hash);
+  });
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-9">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-9">&#182;</a>
+              </div>
+              <p>A <code>popstate</code> event is dispatched to the window every time the active history
+entry changes between two history entries for the same document.</p>
+<p>If the <code>files</code> array is undefined we need to initialize the text adventure,
+otherwise we can just render the current.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-built_in">window</span>.onpopstate = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(event)</span> </span>{
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> files === <span class="hljs-string">'undefined'</span>) {
+    <span class="hljs-keyword">return</span> init();
+  }
+
+  runScene(<span class="hljs-built_in">document</span>.location.hash);
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-10">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-10">&#182;</a>
+              </div>
+              <h2 id="parsing-location-hash-and-running-a-scene">Parsing location hash and running a scene</h2>
+<p>Running a scene includes:</p>
+<ol>
+<li>parsing location’s hash to get scene’s name</li>
+<li>load and render selected scene</li>
+</ol>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> runScene = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(hash)</span> </span>{
+  <span class="hljs-keyword">var</span> scene = parse(hash);
+  loadAndRender(scene);
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-11">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>A gist-txt location hash has the form:</p>
+<pre><code>#&lt;gist-id&gt;<span class="hljs-regexp">/&lt;scene&gt;</span>
+</code></pre><p>To parse the hash:</p>
+<ol>
+<li>remove the ‘#’ refix</li>
+<li>split the remaining string by ‘/‘</li>
+<li>assign the first <em>segment</em> to the global variable <code>gistId</code></li>
+<li>join the remaining segments with ‘/‘</li>
+</ol>
+<p>Note: gists’ files can’t include the ‘/‘ character in the name so, even if
+the remaining portion of the segments array is joined by ‘/‘, that array
+should always contain at most one element.</p>
+<p>If the scene name is blank return ‘index’, the default name of the main
+scene, otherwise return the scene name found.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> parse = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(hash)</span> </span>{
+  <span class="hljs-keyword">var</span> path = hash.slice(<span class="hljs-number">1</span>);
+  <span class="hljs-keyword">var</span> segments = path.split(<span class="hljs-string">'/'</span>);
+  gistId = segments.shift();
+  <span class="hljs-keyword">var</span> scene = segments.join(<span class="hljs-string">'/'</span>);
+
+  <span class="hljs-keyword">if</span> (scene === <span class="hljs-string">''</span>) {
+    <span class="hljs-keyword">return</span> <span class="hljs-string">'index'</span>;
+  }
+
+  <span class="hljs-keyword">return</span> scene;
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p><code>toggleError</code> and <code>toggleLoading</code> help showing error and loading messages.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> toggleError = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(display, errorMessage)</span> </span>{
+  $(<span class="hljs-string">'#error'</span>).html(<span class="hljs-string">'Error: '</span> + errorMessage).toggle(display);
+};
+
+<span class="hljs-keyword">var</span> toggleLoading = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(display)</span> </span>{
+  $(<span class="hljs-string">'#loading'</span>).toggle(display);
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
+              <h2 id="it-s-time-to-play">It’s time to play</h2>
+<p>Let’s play by starting the engine at <code>document.ready</code> event.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>$(init);</pre></div></div>
+            
+        </li>
+        
+    </ul>
+  </div>
+</body>
+</html>
