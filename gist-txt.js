@@ -12,7 +12,7 @@
 var gistId;
 var files;
 var cache = {};
-var VERSION = '1.1.2';
+var VERSION = '1.1.3';
 
 //
 // ## Initialization
