@@ -48,3 +48,14 @@ You can share your games by sharing a link with the format
 An example text adventure is stored in the gist `acebd8fe14942fab4e8e`
 (https://gist.github.com/potomak/acebd8fe14942fab4e8e) and could be shared with
 a link to http://potomak.github.io/gist-txt/#acebd8fe14942fab4e8e
+
+## Documentation
+
+You can find the documentation at
+http://potomak.github.io/gist-txt/docs/gist-txt.html.
+
+Generate documentation for the project by running:
+
+```sh
+$ npm run doc
+```
