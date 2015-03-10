@@ -59,3 +59,28 @@ Generate documentation for the project by running:
 ```sh
 $ npm run doc
 ```
+
+## Building the bundle
+
+Run:
+
+```sh
+$ npm run build
+```
+
+to build a minimized bundle that contains the main script (`gist-txt.js`) and
+all dependencies.
+
+### Development
+
+During development you want to be able to debug your code and continuously
+rebuild the bundle after any change to your code.
+
+You can run:
+
+```sh
+$ npm run watch
+```
+
+to build a development version of the bundle that includes source maps and to
+automatically rebuild the bundle on code changes.
