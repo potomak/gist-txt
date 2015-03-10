@@ -1,4 +1,5 @@
 /node_modules
 /docs
 /test.html
+/bundle.js
 *.swp

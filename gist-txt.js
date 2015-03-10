@@ -12,7 +12,9 @@
 var gistId;
 var files;
 var cache = {};
-var VERSION = '1.1.4';
+
+var VERSION = require('./package.json').version;
+var $ = require('jquery');
 
 //
 // ## Initialization
