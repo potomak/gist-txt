@@ -1,3 +1,5 @@
+'use strict';
+
 //
 // Gist-txt is a minimal text adventure engine that helps game designers to
 // create text adventures from GitHub gists.
@@ -16,6 +18,17 @@ var cache = {};
 var VERSION = require('./package.json').version;
 var $ = require('jquery');
 
+var loadAndRender;
+var getFileContent;
+var render;
+var outputContent;
+var cacheContent;
+var handleInternalLinks;
+var runScene;
+var parse;
+var toggleError;
+var toggleLoading;
+
 //
 // ## Initialization
 //
@@ -32,11 +45,11 @@ var $ = require('jquery');
 // A successful request triggers the loading and rendering of the selected
 // scene.
 //
-var init = function() {
+var init = function () {
   var scene = parse(document.location.hash);
 
   $.getJSON('https://api.github.com/gists/' + gistId)
-    .done(function(gist) {
+    .done(function (gist) {
       $('a#source')
         .attr('href', 'https://gist.github.com/' + gistId)
         .html(gistId);
@@ -45,7 +58,7 @@ var init = function() {
       files = gist.files;
       loadAndRender(scene);
     })
-    .fail(function(jsXHR) {
+    .fail(function (jsXHR) {
       toggleLoading(false);
       toggleError(true, jsXHR.statusText);
     });
@@ -67,26 +80,26 @@ var init = function() {
 // The process continues adding `click` handlers to link in the content, to
 // handle navigation between scenes.
 //
-var loadAndRender = function(scene) {
+loadAndRender = function (scene) {
   toggleError(false);
   toggleLoading(true);
 
   var promise;
-  if (typeof cache[scene] !== 'undefined') {
+  if (cache[scene] !== undefined) {
     promise = outputContent(cache[scene]);
   } else {
     promise = getFileContent(scene)
       .then(render)
       .then(outputContent)
-      .then(cacheContent.bind(this, scene))
+      .then(cacheContent.bind(this, scene));
   }
 
   promise
     .then(handleInternalLinks)
-    .fail(function(errorMessage) {
+    .fail(function (errorMessage) {
       toggleError(true, errorMessage);
     })
-    .always(function() {
+    .always(function () {
       toggleLoading(false);
     });
 };
@@ -101,18 +114,18 @@ var loadAndRender = function(scene) {
 // A GET request to file's `raw_url` is made and if successful it resolves the
 // deferred object with the result content as argument of the callback.
 //
-var getFileContent = function(scene) {
-  return $.Deferred(function(defer) {
-    var file = files[scene + '.markdown']
+getFileContent = function (scene) {
+  return $.Deferred(function (defer) {
+    var file = files[scene + '.markdown'];
 
-    if (typeof file === 'undefined') {
+    if (file === undefined) {
       defer.reject('Scene not found');
       return;
     }
 
     $.get(file.raw_url)
       .done(defer.resolve)
-      .fail(function(jsXHR) {
+      .fail(function (jsXHR) {
         defer.reject(jsXHR.statusText);
       });
   }).promise();
@@ -122,7 +135,7 @@ var getFileContent = function(scene) {
 // To render a Markdown file it sends a POST request to
 // https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode
 // and request's associated promise is returned.
-var render = function(markdown) {
+render = function (markdown) {
   return $.ajax({
     type: 'POST',
     url: 'https://api.github.com/markdown/raw',
@@ -138,7 +151,7 @@ var render = function(markdown) {
 // The returning promise fulfills after the content has been inserted in the
 // DOM.
 //
-var outputContent = function(content) {
+outputContent = function (content) {
   return $('#content').html(content).promise();
 };
 
@@ -149,8 +162,8 @@ var outputContent = function(content) {
 // The cache is composed by a simple JavaScript object that contains rendered
 // content indexed by scene name.
 //
-var cacheContent = function(scene, contentElement) {
-  return $.Deferred(function(defer) {
+cacheContent = function (scene, contentElement) {
+  return $.Deferred(function (defer) {
     cache[scene] = contentElement.html();
     defer.resolve(contentElement);
   }).promise();
@@ -170,8 +183,8 @@ var cacheContent = function(scene, contentElement) {
 // At every internal link click event a new state get pushed in the
 // `window.history` object to allow navigation using back and forward buttons.
 //
-var handleInternalLinks = function(contentElement) {
-  contentElement.find('a').click(function(event) {
+handleInternalLinks = function (contentElement) {
+  contentElement.find('a').click(function (event) {
     event.preventDefault();
     var hash = '#' + gistId + '/' + $(this).attr('href');
     runScene(hash);
@@ -186,8 +199,8 @@ var handleInternalLinks = function(contentElement) {
 // If the `files` array is undefined we need to initialize the text adventure,
 // otherwise we can just render the current.
 //
-window.onpopstate = function(event) {
-  if (typeof files === 'undefined') {
+window.onpopstate = function () {
+  if (files === undefined) {
     return init();
   }
 
@@ -202,7 +215,7 @@ window.onpopstate = function(event) {
 // 1. parsing location's hash to get scene's name
 // 1. load and render selected scene
 //
-var runScene = function(hash) {
+runScene = function (hash) {
   var scene = parse(hash);
   loadAndRender(scene);
 };
@@ -226,7 +239,7 @@ var runScene = function(hash) {
 // If the scene name is blank return 'index', the default name of the main
 // scene, otherwise return the scene name found.
 //
-var parse = function(hash) {
+parse = function (hash) {
   var path = hash.slice(1);
   var segments = path.split('/');
   gistId = segments.shift();
@@ -242,11 +255,11 @@ var parse = function(hash) {
 //
 // `toggleError` and `toggleLoading` help showing error and loading messages.
 //
-var toggleError = function(display, errorMessage) {
+toggleError = function (display, errorMessage) {
   $('#error').html('Error: ' + errorMessage).toggle(display);
 };
 
-var toggleLoading = function(display) {
+toggleLoading = function (display) {
   $('#loading').toggle(display);
 };
 

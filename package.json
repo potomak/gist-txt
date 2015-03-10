@@ -1,11 +1,12 @@
 {
   "name": "gist-txt",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A minimal text adventure engine",
   "main": "gist-txt.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "doc": "docco *.js",
+    "lint": "jslint gist-txt.js",
     "build": "browserify gist-txt.js | uglifyjs > bundle.js",
     "watch": "watchify gist-txt.js -o bundle.js --debug --verbose"
   },
@@ -35,6 +36,7 @@
   "devDependencies": {
     "browserify": "^9.0.3",
     "docco": "^0.7.0",
+    "jslint": "^0.8.1",
     "uglify-js": "^2.4.16",
     "watchify": "^2.4.0"
   },
