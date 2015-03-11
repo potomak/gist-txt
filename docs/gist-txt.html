@@ -11,29 +11,6 @@
   <div id="container">
     <div id="background"></div>
     
-      <ul id="jump_to">
-        <li>
-          <a class="large" href="javascript:void(0);">Jump To &hellip;</a>
-          <a class="small" href="javascript:void(0);">+</a>
-          <div id="jump_wrapper">
-          <div id="jump_page_wrapper">
-            <div id="jump_page">
-              
-                
-                <a class="source" href="bundle.html">
-                  bundle.js
-                </a>
-              
-                
-                <a class="source" href="gist-txt.html">
-                  gist-txt.js
-                </a>
-              
-            </div>
-          </div>
-        </li>
-      </ul>
-    
     <ul class="sections">
         
           <li id="title">
@@ -267,9 +244,13 @@ the stripped content.</p>
             
             <div class="content"><div class='highlight'><pre>extractYFM = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
   <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">var</span> parsed = yfm(content);
-    state = $.extend(state, parsed.context.state);
-    defer.resolve(parsed.content);
+    <span class="hljs-keyword">try</span> {
+      <span class="hljs-keyword">var</span> parsed = yfm(content);
+      state = $.extend(state, parsed.context.state);
+      defer.resolve(parsed.content);
+    } <span class="hljs-keyword">catch</span> (e) {
+      defer.reject(e);
+    }
   }).promise();
 };</pre></div></div>
             
@@ -289,7 +270,11 @@ string.</p>
             
             <div class="content"><div class='highlight'><pre>renderMustache = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
   <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    defer.resolve(mustache.render(content, state));
+    <span class="hljs-keyword">try</span> {
+      defer.resolve(mustache.render(content, state));
+    } <span class="hljs-keyword">catch</span> (e) {
+      defer.reject(e);
+    }
   }).promise();
 };</pre></div></div>
             
@@ -309,7 +294,11 @@ string.</p>
             
             <div class="content"><div class='highlight'><pre>renderMarkdown = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
   <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    defer.resolve(marked(content));
+    <span class="hljs-keyword">try</span> {
+      defer.resolve(marked(content));
+    } <span class="hljs-keyword">catch</span> (e) {
+      defer.reject(e);
+    }
   }).promise();
 };</pre></div></div>
             
