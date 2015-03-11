@@ -14,15 +14,22 @@
 var gistId;
 var files;
 var cache = {};
+var state = {};
 
 var VERSION = require('./package.json').version;
 var $ = require('jquery');
+var mustache = require('mustache');
+var marked = require('marked');
+var yfm = require('yfm');
 
+var compileAndDisplayFooter;
 var loadAndRender;
 var getFileContent;
-var render;
-var outputContent;
+var extractYFM;
 var cacheContent;
+var renderMustache;
+var renderMarkdown;
+var outputContent;
 var handleInternalLinks;
 var runScene;
 var parse;
@@ -32,8 +39,8 @@ var toggleLoading;
 //
 // ## Initialization
 //
-// During the initialization stage the hash portion get parsed to extract two
-// main information:
+// During the initialization stage the hash portion of the path get parsed to
+// extract two main information:
 //
 // 1. gist id
 // 1. scene name
@@ -42,7 +49,7 @@ var toggleLoading;
 // https://developer.github.com/v3/gists/#get-a-single-gist is made to get
 // gist's data.
 //
-// A successful request triggers the loading and rendering of the selected
+// A successful response triggers the loading and rendering of the selected
 // scene.
 //
 var init = function () {
@@ -50,18 +57,29 @@ var init = function () {
 
   $.getJSON('https://api.github.com/gists/' + gistId)
     .done(function (gist) {
-      $('a#source')
-        .attr('href', 'https://gist.github.com/' + gistId)
-        .html(gistId);
-      $('span#version').html(VERSION);
-      $('footer').show();
       files = gist.files;
+      compileAndDisplayFooter();
       loadAndRender(scene);
     })
     .fail(function (jsXHR) {
       toggleLoading(false);
       toggleError(true, jsXHR.statusText);
     });
+};
+
+//
+// If the gist response is successful the footer gets compiled and displayed to
+// show:
+//
+// * a link to the original gist
+// * current version of the engine
+//
+compileAndDisplayFooter = function () {
+  $('a#source')
+    .attr('href', 'https://gist.github.com/' + gistId)
+    .html(gistId);
+  $('span#version').html(VERSION);
+  $('footer').show();
 };
 
 //
@@ -72,10 +90,11 @@ var init = function () {
 //
 // 1. getting the raw content of the file sending a GET request to file's
 //   `raw_url`
-// 1. rendering the Markdown content sending a POST request to
-//   https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode
+// 1. extracting YAML Front Matter and stores scene state in the `state` object
+// 1. storing a copy of the Markdown content in the `cache` object
+// 1. rendering the Mustache content
+// 1. rendering the Markdown content
 // 1. output the rendered content to the HTML `div#content` element
-// 1. store a copy og the rendered content in the `cache` object
 //
 // The process continues adding `click` handlers to link in the content, to
 // handle navigation between scenes.
@@ -86,15 +105,17 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    promise = outputContent(cache[scene]);
+    promise = renderMustache(cache[scene]);
   } else {
     promise = getFileContent(scene)
-      .then(render)
-      .then(outputContent)
-      .then(cacheContent.bind(this, scene));
+      .then(extractYFM)
+      .then(cacheContent.bind(this, scene))
+      .then(renderMustache);
   }
 
   promise
+    .then(renderMarkdown)
+    .then(outputContent)
     .then(handleInternalLinks)
     .fail(function (errorMessage) {
       toggleError(true, errorMessage);
@@ -132,40 +153,59 @@ getFileContent = function (scene) {
 };
 
 //
-// To render a Markdown file it sends a POST request to
-// https://developer.github.com/v3/markdown/#render-a-markdown-document-in-raw-mode
-// and request's associated promise is returned.
-render = function (markdown) {
-  return $.ajax({
-    type: 'POST',
-    url: 'https://api.github.com/markdown/raw',
-    data: markdown,
-    contentType: 'text/plain'
-  });
+// The YAML Front Matter is extracted from the original content. The resulting
+// context is used to extend the global `state` and a promise is fulfilled with
+// the stripped content.
+//
+extractYFM = function (content) {
+  return $.Deferred(function (defer) {
+    var parsed = yfm(content);
+    state = $.extend(state, parsed.context.state);
+    defer.resolve(parsed.content);
+  }).promise();
 };
 
 //
-// The HTML rendered content is the main content of the scene and it gets
-// outputed to the `#content` element in the DOM.
+// Mustache content is rendered and a promise is fulfilled with the resulting
+// string.
 //
-// The returning promise fulfills after the content has been inserted in the
-// DOM.
+renderMustache = function (content) {
+  return $.Deferred(function (defer) {
+    defer.resolve(mustache.render(content, state));
+  }).promise();
+};
+
+//
+// Markdown content is rendered and a promise is fulfilled with the resulting
+// string.
+//
+renderMarkdown = function (content) {
+  return $.Deferred(function (defer) {
+    defer.resolve(marked(content));
+  }).promise();
+};
+
+//
+// The HTML rendered content is the main content of the scene. It gets appended
+// to the `#content` element in the DOM.
+//
+// The returning promise fulfills after the `content` string has been inserted
+// in the DOM.
 //
 outputContent = function (content) {
   return $('#content').html(content).promise();
 };
 
 //
-// Caching rendered content prevent waste of API calls and band for slow
-// connections.
+// Caching content prevents waste of API calls and band for slow connections.
 //
-// The cache is composed by a simple JavaScript object that contains rendered
-// content indexed by scene name.
+// The cache is composed by a simple JavaScript object that contains gist's
+// files content indexed by scene name.
 //
-cacheContent = function (scene, contentElement) {
+cacheContent = function (scene, content) {
   return $.Deferred(function (defer) {
-    cache[scene] = contentElement.html();
-    defer.resolve(contentElement);
+    cache[scene] = content;
+    defer.resolve(content);
   }).promise();
 };
 

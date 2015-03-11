@@ -38,6 +38,36 @@ You can make links to the *main scene* using the `index` name, example:
 [Restart the game](index)
 ```
 
+### Story state and Mustache tags
+
+The story has a global state that could be set using YAML Front Matter blocks.
+
+YAML Front Matter blocks are blocks of YAML at the top of each scene file. You
+can alter story's state by adding an object associated to the `state` property.
+
+Story's state can be used to change the behavior of the scene by adding Mustache
+tags.
+
+For example the scene:
+
+```markdown
+---
+state:
+  name: John
+---
+
+Hi {{name}}!
+```
+
+compiles to the following HTML:
+
+```html
+<p>Hi John!</p>
+```
+
+You can learn more about Mustache tags and syntax at
+https://github.com/janl/mustache.js.
+
 ## Hosting
 
 Your text adventures are already hosted by default at GitHub Gist.
