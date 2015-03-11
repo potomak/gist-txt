@@ -159,9 +159,13 @@ getFileContent = function (scene) {
 //
 extractYFM = function (content) {
   return $.Deferred(function (defer) {
-    var parsed = yfm(content);
-    state = $.extend(state, parsed.context.state);
-    defer.resolve(parsed.content);
+    try {
+      var parsed = yfm(content);
+      state = $.extend(state, parsed.context.state);
+      defer.resolve(parsed.content);
+    } catch (e) {
+      defer.reject(e);
+    }
   }).promise();
 };
 
@@ -171,7 +175,11 @@ extractYFM = function (content) {
 //
 renderMustache = function (content) {
   return $.Deferred(function (defer) {
-    defer.resolve(mustache.render(content, state));
+    try {
+      defer.resolve(mustache.render(content, state));
+    } catch (e) {
+      defer.reject(e);
+    }
   }).promise();
 };
 
@@ -181,7 +189,11 @@ renderMustache = function (content) {
 //
 renderMarkdown = function (content) {
   return $.Deferred(function (defer) {
-    defer.resolve(marked(content));
+    try {
+      defer.resolve(marked(content));
+    } catch (e) {
+      defer.reject(e);
+    }
   }).promise();
 };
 
