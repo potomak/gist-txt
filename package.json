@@ -5,7 +5,7 @@
   "main": "gist-txt.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "doc": "docco *.js",
+    "doc": "docco gist-txt.js",
     "lint": "jslint gist-txt.js",
     "build": "browserify gist-txt.js | uglifyjs > bundle.js",
     "watch": "watchify gist-txt.js -o bundle.js --debug --verbose"
