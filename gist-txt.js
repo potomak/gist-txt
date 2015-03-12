@@ -12,6 +12,7 @@
 // Get more info at https://github.com/potomak/gist-txt.
 //
 var gistId;
+var currentScene;
 var files;
 var cache = {};
 var state = {};
@@ -22,10 +23,12 @@ var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
 
-var compileAndDisplayFooter;
+var applyStylesheet;
 var loadAndRender;
+var compileAndDisplayFooter;
 var getFileContent;
 var extractYFM;
+var injectSceneStyle;
 var cacheContent;
 var renderMustache;
 var renderMarkdown;
@@ -58,8 +61,9 @@ var init = function () {
   $.getJSON('https://api.github.com/gists/' + gistId)
     .done(function (gist) {
       files = gist.files;
-      compileAndDisplayFooter();
-      loadAndRender(scene);
+      applyStylesheet()
+        .then(loadAndRender.bind(this, scene))
+        .done(compileAndDisplayFooter);
     })
     .fail(function (jsXHR) {
       toggleLoading(false);
@@ -68,18 +72,27 @@ var init = function () {
 };
 
 //
-// If the gist response is successful the footer gets compiled and displayed to
-// show:
+// If gist's files include a named `style.css` its content is used to determine
+// the overall CSS style for the story.
 //
-// * a link to the original gist
-// * current version of the engine
+// The method returns a promise that is always resolved (the stylesheet is
+// optional).
 //
-compileAndDisplayFooter = function () {
-  $('a#source')
-    .attr('href', 'https://gist.github.com/' + gistId)
-    .html(gistId);
-  $('span#version').html(VERSION);
-  $('footer').show();
+applyStylesheet = function () {
+  return $.Deferred(function (defer) {
+    if (files['style.css'] !== undefined) {
+      $.get(files['style.css'].raw_url)
+        .done(function (content) {
+          $('<style>')
+            .attr('type', 'text/css')
+            .html(content)
+            .appendTo('head');
+        })
+        .always(defer.resolve);
+    } else {
+      defer.resolve();
+    }
+  }).promise();
 };
 
 //
@@ -99,6 +112,10 @@ compileAndDisplayFooter = function () {
 // The process continues adding `click` handlers to link in the content, to
 // handle navigation between scenes.
 //
+// If everything goes well current scene name is associated to the global
+// variable `currentScene`, then previous scene's stylesheet is disactivated and
+// current scene's stylesheet is activated.
+//
 loadAndRender = function (scene) {
   toggleError(false);
   toggleLoading(true);
@@ -108,21 +125,38 @@ loadAndRender = function (scene) {
     promise = renderMustache(cache[scene]);
   } else {
     promise = getFileContent(scene)
-      .then(extractYFM)
+      .then(extractYFM.bind(this, scene))
       .then(cacheContent.bind(this, scene))
       .then(renderMustache);
   }
 
-  promise
+  return promise
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
-    .fail(function (errorMessage) {
-      toggleError(true, errorMessage);
+    .fail(toggleError.bind(this, true))
+    .always(toggleLoading.bind(this, false))
+    .done(function () {
+      $('#' + currentScene + '-style').prop('disabled', true);
+      $('#' + scene + '-style').prop('disabled', false);
+      currentScene = scene;
     })
-    .always(function () {
-      toggleLoading(false);
-    });
+    .promise();
+};
+
+//
+// If the gist response is successful the footer gets compiled and displayed to
+// show:
+//
+// * a link to the original gist
+// * current version of the engine
+//
+compileAndDisplayFooter = function () {
+  $('a#source')
+    .attr('href', 'https://gist.github.com/' + gistId)
+    .html(gistId);
+  $('span#version').html(VERSION);
+  $('footer').show();
 };
 
 //
@@ -157,16 +191,41 @@ getFileContent = function (scene) {
 // context is used to extend the global `state` and a promise is fulfilled with
 // the stripped content.
 //
-extractYFM = function (content) {
+// If context's `style` property is defined a `<style>` tag with the content of
+// the property is injected to override global stylesheet rules.
+//
+extractYFM = function (scene, content) {
   return $.Deferred(function (defer) {
     try {
       var parsed = yfm(content);
       state = $.extend(state, parsed.context.state);
+      if (parsed.context.style !== undefined) {
+        injectSceneStyle(scene, parsed.context.style);
+      }
       defer.resolve(parsed.content);
     } catch (e) {
       defer.reject(e);
     }
   }).promise();
+};
+
+//
+// To inject a scene's stylesheet a `<style>` element with the id attribute in
+// the form:
+//
+//     scene + '-style'
+//
+// get appended into the `<head>` of the HTML document.
+//
+// Scene stylesheets are disabled on scene transitions and re-enabled on new
+// visits of the scene.
+//
+injectSceneStyle = function (scene, content) {
+  $('<style>')
+    .attr('id', scene + '-style')
+    .attr('type', 'text/css')
+    .html(content)
+    .appendTo('head');
 };
 
 //
