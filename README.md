@@ -68,6 +68,16 @@ compiles to the following HTML:
 You can learn more about Mustache tags and syntax at
 https://github.com/janl/mustache.js.
 
+### Custom styles
+
+The global stylesheet is determined by the existence on the gist of a file
+named `style.css`. Rules in this file get applied during the initialization of
+the story before the first scene is rendered.
+
+Scene's stylesheet are associated to the `style` property of the YAML Front
+Matter of every scene. The stylesheet is enabled when the scene is active and
+disabled when the scene is not active.
+
 ## Hosting
 
 Your text adventures are already hosted by default at GitHub Gist.
