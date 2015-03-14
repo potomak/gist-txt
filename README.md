@@ -124,3 +124,19 @@ $ npm run watch
 
 to build a development version of the bundle that includes source maps and to
 automatically rebuild the bundle on code changes.
+
+### Static server
+
+The site can be compiled and served locally using Jekyll:
+
+```sh
+$ jekyll s
+```
+
+Or you can run a Python static server:
+
+```sh
+$ python -m SimpleHTTPServer
+```
+
+Note: using `SimpleHTTPServer` only `index.html` will be served correctly.
