@@ -2,4 +2,6 @@
 /docs
 /test.html
 /bundle.js
+/_site
 *.swp
+*.ruby*
