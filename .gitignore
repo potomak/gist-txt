@@ -3,5 +3,6 @@
 /test.html
 /bundle.js
 /_site
+/dev
 *.swp
 *.ruby*

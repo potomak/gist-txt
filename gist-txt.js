@@ -23,6 +23,7 @@ var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
 
+var initUI;
 var applyStylesheet;
 var loadAndRender;
 var compileAndDisplayFooter;
@@ -38,6 +39,7 @@ var runScene;
 var parse;
 var toggleError;
 var toggleLoading;
+var isDev;
 
 //
 // ## Initialization
@@ -52,23 +54,43 @@ var toggleLoading;
 // https://developer.github.com/v3/gists/#get-a-single-gist is made to get
 // gist's data.
 //
+// If gist id is set to `DEV` the `files` variable is set to an arbitrary value
+// and subsequent requests will be sent to the `/dev` path.
+//
 // A successful response triggers the loading and rendering of the selected
 // scene.
 //
 var init = function () {
   var scene = parse(document.location.hash);
 
+  if (isDev()) {
+    files = {};
+    initUI(scene);
+    return;
+  }
+
   $.getJSON('https://api.github.com/gists/' + gistId)
     .done(function (gist) {
       files = gist.files;
-      applyStylesheet()
-        .then(loadAndRender.bind(this, scene))
-        .done(compileAndDisplayFooter);
+      initUI(scene);
     })
     .fail(function (jsXHR) {
       toggleLoading(false);
       toggleError(true, jsXHR.statusText);
     });
+};
+
+//
+// UI initialization consists of three steps:
+//
+// 1. global stylesheet application
+// 1. loading and rendering of the selected scene
+// 1. compilation and display of site footer
+//
+initUI = function (scene) {
+  applyStylesheet()
+    .then(loadAndRender.bind(this, scene))
+    .then(compileAndDisplayFooter);
 };
 
 //
@@ -171,14 +193,24 @@ compileAndDisplayFooter = function () {
 //
 getFileContent = function (scene) {
   return $.Deferred(function (defer) {
-    var file = files[scene + '.markdown'];
+    var fileName = scene + '.markdown';
+    var file = files[fileName];
 
-    if (file === undefined) {
+    if (!isDev() && file === undefined) {
       defer.reject('Scene not found');
       return;
     }
 
-    $.get(file.raw_url)
+    var fileURL;
+
+    if (isDev()) {
+      fileURL = '/dev/' + fileName;
+    } else {
+      fileURL = file.raw_url;
+    }
+
+
+    $.get(fileURL)
       .done(defer.resolve)
       .fail(function (jsXHR) {
         defer.reject(jsXHR.statusText);
@@ -372,6 +404,14 @@ toggleError = function (display, errorMessage) {
 
 toggleLoading = function (display) {
   $('#loading').toggle(display);
+};
+
+//
+// During development you can use the `DEV` special gist id to bypass requests
+// to the local development server to the `/dev` path.
+//
+isDev = function () {
+  return gistId === 'DEV';
 };
 
 //

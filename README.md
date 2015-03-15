@@ -140,3 +140,9 @@ $ python -m SimpleHTTPServer
 ```
 
 Note: using `SimpleHTTPServer` only `index.html` will be served correctly.
+
+## Story development environment
+
+If you want to develop your text adventure locally, you can use the special
+`DEV` gist id to tell the tool to search for project files inside the `/dev`
+directory instead of making external HTTP requests.
