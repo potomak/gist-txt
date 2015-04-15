@@ -78,6 +78,11 @@ Scene's stylesheet are associated to the `style` property of the YAML Front
 Matter of every scene. The stylesheet is enabled when the scene is active and
 disabled when the scene is not active.
 
+### Scene initialization
+
+You can run JavaScript code at every new visit of a scene by implementing a
+function associated to YAML Front Matter's `init` property.
+
 ## Hosting
 
 Your text adventures are already hosted by default at GitHub Gist.
