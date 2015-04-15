@@ -15,7 +15,7 @@ var gistId;
 var currentScene;
 var files;
 var cache = {};
-var state = {};
+window.state = {};
 
 var VERSION = require('./package.json').version;
 var $ = require('jquery');
@@ -23,6 +23,7 @@ var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
 
+var initUI;
 var applyStylesheet;
 var loadAndRender;
 var compileAndDisplayFooter;
@@ -34,10 +35,12 @@ var renderMustache;
 var renderMarkdown;
 var outputContent;
 var handleInternalLinks;
+var runSceneInit;
 var runScene;
 var parse;
 var toggleError;
 var toggleLoading;
+var isDev;
 
 //
 // ## Initialization
@@ -52,23 +55,43 @@ var toggleLoading;
 // https://developer.github.com/v3/gists/#get-a-single-gist is made to get
 // gist's data.
 //
+// If gist id is set to `DEV` the `files` variable is set to an arbitrary value
+// and subsequent requests will be sent to the `/dev` path.
+//
 // A successful response triggers the loading and rendering of the selected
 // scene.
 //
 var init = function () {
   var scene = parse(document.location.hash);
 
+  if (isDev()) {
+    files = {};
+    initUI(scene);
+    return;
+  }
+
   $.getJSON('https://api.github.com/gists/' + gistId)
     .done(function (gist) {
       files = gist.files;
-      applyStylesheet()
-        .then(loadAndRender.bind(this, scene))
-        .done(compileAndDisplayFooter);
+      initUI(scene);
     })
     .fail(function (jsXHR) {
       toggleLoading(false);
       toggleError(true, jsXHR.statusText);
     });
+};
+
+//
+// UI initialization consists of three steps:
+//
+// 1. global stylesheet application
+// 1. loading and rendering of the selected scene
+// 1. compilation and display of site footer
+//
+initUI = function (scene) {
+  applyStylesheet()
+    .then(loadAndRender.bind(this, scene))
+    .then(compileAndDisplayFooter);
 };
 
 //
@@ -105,6 +128,7 @@ applyStylesheet = function () {
 //   `raw_url`
 // 1. extracting YAML Front Matter and stores scene state in the `state` object
 // 1. storing a copy of the Markdown content in the `cache` object
+// 1. running a custom `init` function to initialize scene if present
 // 1. rendering the Mustache content
 // 1. rendering the Markdown content
 // 1. output the rendered content to the HTML `div#content` element
@@ -122,15 +146,16 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    promise = renderMustache(cache[scene]);
+    promise = runSceneInit(cache[scene]);
   } else {
     promise = getFileContent(scene)
       .then(extractYFM.bind(this, scene))
       .then(cacheContent.bind(this, scene))
-      .then(renderMustache);
+      .then(runSceneInit);
   }
 
   return promise
+    .then(renderMustache)
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
@@ -171,14 +196,24 @@ compileAndDisplayFooter = function () {
 //
 getFileContent = function (scene) {
   return $.Deferred(function (defer) {
-    var file = files[scene + '.markdown'];
+    var fileName = scene + '.markdown';
+    var file = files[fileName];
 
-    if (file === undefined) {
+    if (!isDev() && file === undefined) {
       defer.reject('Scene not found');
       return;
     }
 
-    $.get(file.raw_url)
+    var fileURL;
+
+    if (isDev()) {
+      fileURL = '/dev/' + fileName;
+    } else {
+      fileURL = file.raw_url;
+    }
+
+
+    $.get(fileURL)
       .done(defer.resolve)
       .fail(function (jsXHR) {
         defer.reject(jsXHR.statusText);
@@ -198,11 +233,11 @@ extractYFM = function (scene, content) {
   return $.Deferred(function (defer) {
     try {
       var parsed = yfm(content);
-      state = $.extend(state, parsed.context.state);
+      $.extend(window.state, parsed.context.state);
       if (parsed.context.style !== undefined) {
         injectSceneStyle(scene, parsed.context.style);
       }
-      defer.resolve(parsed.content);
+      defer.resolve(parsed);
     } catch (e) {
       defer.reject(e);
     }
@@ -235,7 +270,7 @@ injectSceneStyle = function (scene, content) {
 renderMustache = function (content) {
   return $.Deferred(function (defer) {
     try {
-      defer.resolve(mustache.render(content, state));
+      defer.resolve(mustache.render(content, window.state));
     } catch (e) {
       defer.reject(e);
     }
@@ -271,7 +306,7 @@ outputContent = function (content) {
 // Caching content prevents waste of API calls and band for slow connections.
 //
 // The cache is composed by a simple JavaScript object that contains gist's
-// files content indexed by scene name.
+// files parsed content indexed by scene name.
 //
 cacheContent = function (scene, content) {
   return $.Deferred(function (defer) {
@@ -301,6 +336,18 @@ handleInternalLinks = function (contentElement) {
     runScene(hash);
     window.history.pushState(null, null, document.location.pathname + hash);
   });
+};
+
+//
+// Run a scene initialization function.
+//
+runSceneInit = function (parsed) {
+  return $.Deferred(function (defer) {
+    if (parsed.context.init !== undefined) {
+      parsed.context.init();
+    }
+    defer.resolve(parsed.content);
+  }).promise();
 };
 
 //
@@ -372,6 +419,14 @@ toggleError = function (display, errorMessage) {
 
 toggleLoading = function (display) {
   $('#loading').toggle(display);
+};
+
+//
+// During development you can use the `DEV` special gist id to bypass requests
+// to the local development server to the `/dev` path.
+//
+isDev = function () {
+  return gistId === 'DEV';
 };
 
 //
