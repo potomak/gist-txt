@@ -15,7 +15,7 @@ var gistId;
 var currentScene;
 var files;
 var cache = {};
-var state = {};
+window.state = {};
 
 var VERSION = require('./package.json').version;
 var $ = require('jquery');
@@ -230,7 +230,7 @@ extractYFM = function (scene, content) {
   return $.Deferred(function (defer) {
     try {
       var parsed = yfm(content);
-      state = $.extend(state, parsed.context.state);
+      $.extend(window.state, parsed.context.state);
       if (parsed.context.style !== undefined) {
         injectSceneStyle(scene, parsed.context.style);
       }
@@ -267,7 +267,7 @@ injectSceneStyle = function (scene, content) {
 renderMustache = function (content) {
   return $.Deferred(function (defer) {
     try {
-      defer.resolve(mustache.render(content, state));
+      defer.resolve(mustache.render(content, window.state));
     } catch (e) {
       defer.reject(e);
     }
