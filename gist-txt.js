@@ -35,6 +35,7 @@ var renderMustache;
 var renderMarkdown;
 var outputContent;
 var handleInternalLinks;
+var runSceneInit;
 var runScene;
 var parse;
 var toggleError;
@@ -127,6 +128,7 @@ applyStylesheet = function () {
 //   `raw_url`
 // 1. extracting YAML Front Matter and stores scene state in the `state` object
 // 1. storing a copy of the Markdown content in the `cache` object
+// 1. running a custom `init` function to initialize scene if present
 // 1. rendering the Mustache content
 // 1. rendering the Markdown content
 // 1. output the rendered content to the HTML `div#content` element
@@ -144,15 +146,16 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    promise = renderMustache(cache[scene]);
+    promise = runSceneInit(cache[scene]);
   } else {
     promise = getFileContent(scene)
       .then(extractYFM.bind(this, scene))
       .then(cacheContent.bind(this, scene))
-      .then(renderMustache);
+      .then(runSceneInit);
   }
 
   return promise
+    .then(renderMustache)
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
@@ -234,7 +237,7 @@ extractYFM = function (scene, content) {
       if (parsed.context.style !== undefined) {
         injectSceneStyle(scene, parsed.context.style);
       }
-      defer.resolve(parsed.content);
+      defer.resolve(parsed);
     } catch (e) {
       defer.reject(e);
     }
@@ -303,7 +306,7 @@ outputContent = function (content) {
 // Caching content prevents waste of API calls and band for slow connections.
 //
 // The cache is composed by a simple JavaScript object that contains gist's
-// files content indexed by scene name.
+// files parsed content indexed by scene name.
 //
 cacheContent = function (scene, content) {
   return $.Deferred(function (defer) {
@@ -333,6 +336,18 @@ handleInternalLinks = function (contentElement) {
     runScene(hash);
     window.history.pushState(null, null, document.location.pathname + hash);
   });
+};
+
+//
+// Run a scene initialization function.
+//
+runSceneInit = function (parsed) {
+  return $.Deferred(function (defer) {
+    if (parsed.context.init !== undefined) {
+      parsed.context.init();
+    }
+    defer.resolve(parsed.content);
+  }).promise();
 };
 
 //
