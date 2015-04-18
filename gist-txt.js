@@ -37,6 +37,7 @@ var renderMustache;
 var renderMarkdown;
 var outputContent;
 var handleInternalLinks;
+var updateGameState;
 var runSceneInit;
 var runScene;
 var parse;
@@ -157,6 +158,7 @@ loadAndRender = function (scene) {
   }
 
   return promise
+    .then(updateGameState)
     .then(renderMustache)
     .then(renderMarkdown)
     .then(outputContent)
@@ -231,7 +233,6 @@ getFileContent = function (scene) {
 //
 extractYFM = function (scene, content) {
   var parsed = yfm(content);
-  $.extend(window.state, parsed.context.state);
   if (parsed.context.style !== undefined) {
     injectSceneStyle(scene, parsed.context.style);
   }
@@ -258,7 +259,8 @@ injectSceneStyle = function (scene, content) {
 };
 
 //
-// Mustache content is rendered.
+// Mustache content is rendered using game's global state (`window.state`) as
+// its view object.
 //
 renderMustache = function (content) {
   return mustache.render(content, window.state);
@@ -317,13 +319,21 @@ handleInternalLinks = function (contentElement) {
 };
 
 //
+// Extends game state with current scene's state.
+//
+updateGameState = function (parsed) {
+  $.extend(window.state, parsed.context.state);
+  return parsed.content;
+};
+
+//
 // Run a scene initialization function.
 //
 runSceneInit = function (parsed) {
   if (parsed.context.init !== undefined) {
     parsed.context.init();
   }
-  return parsed.content;
+  return parsed;
 };
 
 //
