@@ -224,8 +224,7 @@ getFileContent = function (scene) {
 
 //
 // The YAML Front Matter is extracted from the original content. The resulting
-// context is used to extend the global `state` and a promise is fulfilled with
-// the stripped content.
+// context is used to extend the global `state`.
 //
 // If context's `style` property is defined a `<style>` tag with the content of
 // the property is injected to override global stylesheet rules.
@@ -259,16 +258,14 @@ injectSceneStyle = function (scene, content) {
 };
 
 //
-// Mustache content is rendered and a promise is fulfilled with the resulting
-// string.
+// Mustache content is rendered.
 //
 renderMustache = function (content) {
   return mustache.render(content, window.state);
 };
 
 //
-// Markdown content is rendered and a promise is fulfilled with the resulting
-// string.
+// Markdown content is rendered.
 //
 renderMarkdown = function (content) {
   return marked(content);
@@ -288,8 +285,8 @@ outputContent = function (content) {
 //
 // Caching content prevents waste of API calls and band for slow connections.
 //
-// The cache is composed by a simple JavaScript object that contains gist's
-// files parsed content indexed by scene name.
+// The cache consists of a simple JavaScript object that contains gist's files
+// parsed content indexed by scene name.
 //
 cacheContent = function (scene, content) {
   cache[scene] = content;
