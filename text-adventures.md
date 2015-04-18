@@ -10,3 +10,8 @@ To add your text adventure to the list, update this page at
 
 * [An interactive story](http://potomak.github.io/gist-txt/#acebd8fe14942fab4e8e)
   by [Giovanni Cappellotto](http://twitter.com/johnnyaboh)
+* [Routine](http://j.mp/play-routine)
+  by [Giovanni Cappellotto](http://twitter/johnnyaboh),
+  [Luca De Rosso](http://twitter/lucaderosso),
+  [Francesco Fraioli](http://twitter/pinakes),
+  [Daniel Greenfeld](http://twitter/campoverdi)
