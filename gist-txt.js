@@ -37,6 +37,7 @@ var renderMustache;
 var renderMarkdown;
 var outputContent;
 var handleInternalLinks;
+var updateGameState;
 var runSceneInit;
 var runScene;
 var parse;
@@ -106,15 +107,17 @@ initUI = function (scene) {
 applyStylesheet = function () {
   var deferred = q.defer();
   if (files['style.css'] !== undefined) {
-    return q($.get(files['style.css'].raw_url))
+    q($.get(files['style.css'].raw_url))
       .then(function (content) {
         $('<style>')
           .attr('type', 'text/css')
           .html(content)
           .appendTo('head');
-      });
+      })
+      .fin(deferred.resolve);
+  } else {
+    deferred.resolve();
   }
-  deferred.resolve();
   return deferred.promise;
 };
 
@@ -155,6 +158,7 @@ loadAndRender = function (scene) {
   }
 
   return promise
+    .then(updateGameState)
     .then(renderMustache)
     .then(renderMarkdown)
     .then(outputContent)
@@ -222,15 +226,13 @@ getFileContent = function (scene) {
 
 //
 // The YAML Front Matter is extracted from the original content. The resulting
-// context is used to extend the global `state` and a promise is fulfilled with
-// the stripped content.
+// context is used to extend the global `state`.
 //
 // If context's `style` property is defined a `<style>` tag with the content of
 // the property is injected to override global stylesheet rules.
 //
 extractYFM = function (scene, content) {
   var parsed = yfm(content);
-  $.extend(window.state, parsed.context.state);
   if (parsed.context.style !== undefined) {
     injectSceneStyle(scene, parsed.context.style);
   }
@@ -257,16 +259,15 @@ injectSceneStyle = function (scene, content) {
 };
 
 //
-// Mustache content is rendered and a promise is fulfilled with the resulting
-// string.
+// Mustache content is rendered using game's global state (`window.state`) as
+// its view object.
 //
 renderMustache = function (content) {
   return mustache.render(content, window.state);
 };
 
 //
-// Markdown content is rendered and a promise is fulfilled with the resulting
-// string.
+// Markdown content is rendered.
 //
 renderMarkdown = function (content) {
   return marked(content);
@@ -286,8 +287,8 @@ outputContent = function (content) {
 //
 // Caching content prevents waste of API calls and band for slow connections.
 //
-// The cache is composed by a simple JavaScript object that contains gist's
-// files parsed content indexed by scene name.
+// The cache consists of a simple JavaScript object that contains gist's files
+// parsed content indexed by scene name.
 //
 cacheContent = function (scene, content) {
   cache[scene] = content;
@@ -318,13 +319,21 @@ handleInternalLinks = function (contentElement) {
 };
 
 //
+// Extends game state with current scene's state.
+//
+updateGameState = function (parsed) {
+  $.extend(window.state, parsed.context.state);
+  return parsed.content;
+};
+
+//
 // Run a scene initialization function.
 //
 runSceneInit = function (parsed) {
   if (parsed.context.init !== undefined) {
     parsed.context.init();
   }
-  return parsed.content;
+  return parsed;
 };
 
 //
