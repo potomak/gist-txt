@@ -55,6 +55,7 @@ adventure.</p>
 <span class="hljs-keyword">var</span> currentScene;
 <span class="hljs-keyword">var</span> files;
 <span class="hljs-keyword">var</span> cache = {};
+<span class="hljs-keyword">var</span> loaded = <span class="hljs-literal">false</span>;
 <span class="hljs-built_in">window</span>.state = {};
 
 <span class="hljs-keyword">var</span> VERSION = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./package.json'</span>).version;
@@ -62,6 +63,7 @@ adventure.</p>
 <span class="hljs-keyword">var</span> mustache = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mustache'</span>);
 <span class="hljs-keyword">var</span> marked = <span class="hljs-built_in">require</span>(<span class="hljs-string">'marked'</span>);
 <span class="hljs-keyword">var</span> yfm = <span class="hljs-built_in">require</span>(<span class="hljs-string">'yfm'</span>);
+<span class="hljs-keyword">var</span> q = <span class="hljs-built_in">require</span>(<span class="hljs-string">'q'</span>);
 
 <span class="hljs-keyword">var</span> initUI;
 <span class="hljs-keyword">var</span> applyStylesheet;
@@ -109,6 +111,7 @@ scene.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> init = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+  loaded = <span class="hljs-literal">true</span>;
   <span class="hljs-keyword">var</span> scene = parse(<span class="hljs-built_in">document</span>.location.hash);
 
   <span class="hljs-keyword">if</span> (isDev()) {
@@ -117,14 +120,13 @@ scene.</p>
     <span class="hljs-keyword">return</span>;
   }
 
-  $.getJSON(<span class="hljs-string">'https://api.github.com/gists/'</span> + gistId)
-    .done(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(gist)</span> </span>{
+  <span class="hljs-keyword">return</span> q($.getJSON(<span class="hljs-string">'https://api.github.com/gists/'</span> + gistId))
+    .then(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(gist)</span> </span>{
       files = gist.files;
-      initUI(scene);
-    })
-    .fail(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(jsXHR)</span> </span>{
+      <span class="hljs-keyword">return</span> initUI(scene);
+    }, <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(xhr)</span> </span>{
       toggleLoading(<span class="hljs-literal">false</span>);
-      toggleError(<span class="hljs-literal">true</span>, jsXHR.statusText);
+      toggleError(<span class="hljs-literal">true</span>, xhr.statusText);
     });
 };</pre></div></div>
             
@@ -147,7 +149,7 @@ scene.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>initUI = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(scene)</span> </span>{
-  applyStylesheet()
+  <span class="hljs-keyword">return</span> applyStylesheet()
     .then(loadAndRender.bind(<span class="hljs-keyword">this</span>, scene))
     .then(compileAndDisplayFooter);
 };</pre></div></div>
@@ -161,28 +163,26 @@ scene.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-5">&#182;</a>
               </div>
-              <p>If gist’s files include a named <code>style.css</code> its content is used to determine
-the overall CSS style for the story.</p>
+              <p>If gist’s files include a <code>style.css</code> its content is used to determine the
+overall CSS style for the story.</p>
 <p>The method returns a promise that is always resolved (the stylesheet is
 optional).</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre>applyStylesheet = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">if</span> (files[<span class="hljs-string">'style.css'</span>] !== <span class="hljs-literal">undefined</span>) {
-      $.get(files[<span class="hljs-string">'style.css'</span>].raw_url)
-        .done(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
-          $(<span class="hljs-string">'&lt;style&gt;'</span>)
-            .attr(<span class="hljs-string">'type'</span>, <span class="hljs-string">'text/css'</span>)
-            .html(content)
-            .appendTo(<span class="hljs-string">'head'</span>);
-        })
-        .always(defer.resolve);
-    } <span class="hljs-keyword">else</span> {
-      defer.resolve();
-    }
-  }).promise();
+  <span class="hljs-keyword">var</span> deferred = q.defer();
+  <span class="hljs-keyword">if</span> (files[<span class="hljs-string">'style.css'</span>] !== <span class="hljs-literal">undefined</span>) {
+    <span class="hljs-keyword">return</span> q($.get(files[<span class="hljs-string">'style.css'</span>].raw_url))
+      .then(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
+        $(<span class="hljs-string">'&lt;style&gt;'</span>)
+          .attr(<span class="hljs-string">'type'</span>, <span class="hljs-string">'text/css'</span>)
+          .html(content)
+          .appendTo(<span class="hljs-string">'head'</span>);
+      });
+  }
+  deferred.resolve();
+  <span class="hljs-keyword">return</span> deferred.promise;
 };</pre></div></div>
             
         </li>
@@ -221,7 +221,7 @@ current scene’s stylesheet is activated.</p>
 
   <span class="hljs-keyword">var</span> promise;
   <span class="hljs-keyword">if</span> (cache[scene] !== <span class="hljs-literal">undefined</span>) {
-    promise = runSceneInit(cache[scene]);
+    promise = q.fcall(runSceneInit.bind(<span class="hljs-keyword">this</span>, cache[scene]));
   } <span class="hljs-keyword">else</span> {
     promise = getFileContent(scene)
       .then(extractYFM.bind(<span class="hljs-keyword">this</span>, scene))
@@ -234,14 +234,13 @@ current scene’s stylesheet is activated.</p>
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
-    .fail(toggleError.bind(<span class="hljs-keyword">this</span>, <span class="hljs-literal">true</span>))
-    .always(toggleLoading.bind(<span class="hljs-keyword">this</span>, <span class="hljs-literal">false</span>))
-    .done(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+    .then(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
       $(<span class="hljs-string">'#'</span> + currentScene + <span class="hljs-string">'-style'</span>).prop(<span class="hljs-string">'disabled'</span>, <span class="hljs-literal">true</span>);
       $(<span class="hljs-string">'#'</span> + scene + <span class="hljs-string">'-style'</span>).prop(<span class="hljs-string">'disabled'</span>, <span class="hljs-literal">false</span>);
       currentScene = scene;
     })
-    .promise();
+    .catch(toggleError.bind(<span class="hljs-keyword">this</span>, <span class="hljs-literal">true</span>))
+    .fin(toggleLoading.bind(<span class="hljs-keyword">this</span>, <span class="hljs-literal">false</span>));
 };</pre></div></div>
             
         </li>
@@ -288,30 +287,28 @@ deferred object with the result content as argument of the callback.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>getFileContent = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(scene)</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">var</span> fileName = scene + <span class="hljs-string">'.markdown'</span>;
-    <span class="hljs-keyword">var</span> file = files[fileName];
+  <span class="hljs-keyword">var</span> deferred = q.defer();
+  <span class="hljs-keyword">var</span> fileName = scene + <span class="hljs-string">'.markdown'</span>;
+  <span class="hljs-keyword">var</span> file = files[fileName];
 
-    <span class="hljs-keyword">if</span> (!isDev() &amp;&amp; file === <span class="hljs-literal">undefined</span>) {
-      defer.reject(<span class="hljs-string">'Scene not found'</span>);
-      <span class="hljs-keyword">return</span>;
-    }
+  <span class="hljs-keyword">if</span> (!isDev() &amp;&amp; file === <span class="hljs-literal">undefined</span>) {
+    deferred.reject(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'Scene not found'</span>));
+    <span class="hljs-keyword">return</span> deferred.promise;
+  }
 
-    <span class="hljs-keyword">var</span> fileURL;
+  <span class="hljs-keyword">var</span> fileURL;
 
-    <span class="hljs-keyword">if</span> (isDev()) {
-      fileURL = <span class="hljs-string">'/dev/'</span> + fileName;
-    } <span class="hljs-keyword">else</span> {
-      fileURL = file.raw_url;
-    }
+  <span class="hljs-keyword">if</span> (isDev()) {
+    fileURL = <span class="hljs-string">'/dev/'</span> + fileName;
+  } <span class="hljs-keyword">else</span> {
+    fileURL = file.raw_url;
+  }
 
-
-    $.get(fileURL)
-      .done(defer.resolve)
-      .fail(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(jsXHR)</span> </span>{
-        defer.reject(jsXHR.statusText);
-      });
-  }).promise();
+  <span class="hljs-keyword">return</span> q($.get(fileURL))
+    .then(deferred.resolve)
+    .catch(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(xhr)</span> </span>{
+      <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(xhr.statusText);
+    });
 };</pre></div></div>
             
         </li>
@@ -332,18 +329,12 @@ the property is injected to override global stylesheet rules.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>extractYFM = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(scene, content)</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">try</span> {
-      <span class="hljs-keyword">var</span> parsed = yfm(content);
-      $.extend(<span class="hljs-built_in">window</span>.state, parsed.context.state);
-      <span class="hljs-keyword">if</span> (parsed.context.style !== <span class="hljs-literal">undefined</span>) {
-        injectSceneStyle(scene, parsed.context.style);
-      }
-      defer.resolve(parsed);
-    } <span class="hljs-keyword">catch</span> (e) {
-      defer.reject(e);
-    }
-  }).promise();
+  <span class="hljs-keyword">var</span> parsed = yfm(content);
+  $.extend(<span class="hljs-built_in">window</span>.state, parsed.context.state);
+  <span class="hljs-keyword">if</span> (parsed.context.style !== <span class="hljs-literal">undefined</span>) {
+    injectSceneStyle(scene, parsed.context.style);
+  }
+  <span class="hljs-keyword">return</span> parsed;
 };</pre></div></div>
             
         </li>
@@ -387,13 +378,7 @@ string.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>renderMustache = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">try</span> {
-      defer.resolve(mustache.render(content, <span class="hljs-built_in">window</span>.state));
-    } <span class="hljs-keyword">catch</span> (e) {
-      defer.reject(e);
-    }
-  }).promise();
+  <span class="hljs-keyword">return</span> mustache.render(content, <span class="hljs-built_in">window</span>.state);
 };</pre></div></div>
             
         </li>
@@ -411,13 +396,7 @@ string.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>renderMarkdown = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">try</span> {
-      defer.resolve(marked(content));
-    } <span class="hljs-keyword">catch</span> (e) {
-      defer.reject(e);
-    }
-  }).promise();
+  <span class="hljs-keyword">return</span> marked(content);
 };</pre></div></div>
             
         </li>
@@ -437,7 +416,7 @@ in the DOM.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>outputContent = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(content)</span> </span>{
-  <span class="hljs-keyword">return</span> $(<span class="hljs-string">'#content'</span>).html(content).promise();
+  <span class="hljs-keyword">return</span> q($(<span class="hljs-string">'#content'</span>).html(content).promise());
 };</pre></div></div>
             
         </li>
@@ -456,10 +435,8 @@ files parsed content indexed by scene name.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>cacheContent = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(scene, content)</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    cache[scene] = content;
-    defer.resolve(content);
-  }).promise();
+  cache[scene] = content;
+  <span class="hljs-keyword">return</span> content;
 };</pre></div></div>
             
         </li>
@@ -505,12 +482,10 @@ form:</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>runSceneInit = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(parsed)</span> </span>{
-  <span class="hljs-keyword">return</span> $.Deferred(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(defer)</span> </span>{
-    <span class="hljs-keyword">if</span> (parsed.context.init !== <span class="hljs-literal">undefined</span>) {
-      parsed.context.init();
-    }
-    defer.resolve(parsed.content);
-  }).promise();
+  <span class="hljs-keyword">if</span> (parsed.context.init !== <span class="hljs-literal">undefined</span>) {
+    parsed.context.init();
+  }
+  <span class="hljs-keyword">return</span> parsed.content;
 };</pre></div></div>
             
         </li>
@@ -525,16 +500,18 @@ form:</p>
               <p>A <code>popstate</code> event is dispatched to the window every time the active history
 entry changes between two history entries for the same document.</p>
 <p>If the <code>files</code> array is undefined we need to initialize the text adventure,
-otherwise we can just render the current.</p>
+otherwise we can just render the current scene.</p>
 
             </div>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-built_in">window</span>.onpopstate = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
-  <span class="hljs-keyword">if</span> (files === <span class="hljs-literal">undefined</span>) {
+  <span class="hljs-keyword">if</span> (!loaded) {
     <span class="hljs-keyword">return</span> init();
   }
 
-  runScene(<span class="hljs-built_in">document</span>.location.hash);
+  <span class="hljs-keyword">if</span> (files !== <span class="hljs-literal">undefined</span>) {
+    runScene(<span class="hljs-built_in">document</span>.location.hash);
+  }
 };</pre></div></div>
             
         </li>
