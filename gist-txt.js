@@ -211,11 +211,13 @@ getFileContent = function (scene) {
     fileURL = file.raw_url;
   }
 
-  return q($.get(fileURL))
+  q($.get(fileURL))
     .then(deferred.resolve)
     .catch(function (xhr) {
       throw new Error(xhr.statusText);
     });
+
+  return deferred.promise;
 };
 
 //
