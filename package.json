@@ -1,6 +1,6 @@
 {
   "name": "gist-txt",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "A minimal text adventure engine",
   "main": "gist-txt.js",
   "scripts": {
@@ -42,8 +42,9 @@
   },
   "dependencies": {
     "jquery": "^2.1.3",
-    "mustache": "^1.1.0",
     "marked": "^0.3.3",
+    "mustache": "^1.1.0",
+    "q": "^1.2.0",
     "yfm": "^0.2.0"
   }
 }

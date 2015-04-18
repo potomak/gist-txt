@@ -15,6 +15,7 @@ var gistId;
 var currentScene;
 var files;
 var cache = {};
+var loaded = false;
 window.state = {};
 
 var VERSION = require('./package.json').version;
@@ -22,6 +23,7 @@ var $ = require('jquery');
 var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
+var q = require('q');
 
 var initUI;
 var applyStylesheet;
@@ -62,6 +64,7 @@ var isDev;
 // scene.
 //
 var init = function () {
+  loaded = true;
   var scene = parse(document.location.hash);
 
   if (isDev()) {
@@ -70,14 +73,13 @@ var init = function () {
     return;
   }
 
-  $.getJSON('https://api.github.com/gists/' + gistId)
-    .done(function (gist) {
+  return q($.getJSON('https://api.github.com/gists/' + gistId))
+    .then(function (gist) {
       files = gist.files;
-      initUI(scene);
-    })
-    .fail(function (jsXHR) {
+      return initUI(scene);
+    }, function (xhr) {
       toggleLoading(false);
-      toggleError(true, jsXHR.statusText);
+      toggleError(true, xhr.statusText);
     });
 };
 
@@ -89,33 +91,31 @@ var init = function () {
 // 1. compilation and display of site footer
 //
 initUI = function (scene) {
-  applyStylesheet()
+  return applyStylesheet()
     .then(loadAndRender.bind(this, scene))
     .then(compileAndDisplayFooter);
 };
 
 //
-// If gist's files include a named `style.css` its content is used to determine
-// the overall CSS style for the story.
+// If gist's files include a `style.css` its content is used to determine the
+// overall CSS style for the story.
 //
 // The method returns a promise that is always resolved (the stylesheet is
 // optional).
 //
 applyStylesheet = function () {
-  return $.Deferred(function (defer) {
-    if (files['style.css'] !== undefined) {
-      $.get(files['style.css'].raw_url)
-        .done(function (content) {
-          $('<style>')
-            .attr('type', 'text/css')
-            .html(content)
-            .appendTo('head');
-        })
-        .always(defer.resolve);
-    } else {
-      defer.resolve();
-    }
-  }).promise();
+  var deferred = q.defer();
+  if (files['style.css'] !== undefined) {
+    return q($.get(files['style.css'].raw_url))
+      .then(function (content) {
+        $('<style>')
+          .attr('type', 'text/css')
+          .html(content)
+          .appendTo('head');
+      });
+  }
+  deferred.resolve();
+  return deferred.promise;
 };
 
 //
@@ -146,7 +146,7 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    promise = runSceneInit(cache[scene]);
+    promise = q.fcall(runSceneInit.bind(this, cache[scene]));
   } else {
     promise = getFileContent(scene)
       .then(extractYFM.bind(this, scene))
@@ -159,14 +159,13 @@ loadAndRender = function (scene) {
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
-    .fail(toggleError.bind(this, true))
-    .always(toggleLoading.bind(this, false))
-    .done(function () {
+    .then(function () {
       $('#' + currentScene + '-style').prop('disabled', true);
       $('#' + scene + '-style').prop('disabled', false);
       currentScene = scene;
     })
-    .promise();
+    .catch(toggleError.bind(this, true))
+    .fin(toggleLoading.bind(this, false));
 };
 
 //
@@ -195,30 +194,28 @@ compileAndDisplayFooter = function () {
 // deferred object with the result content as argument of the callback.
 //
 getFileContent = function (scene) {
-  return $.Deferred(function (defer) {
-    var fileName = scene + '.markdown';
-    var file = files[fileName];
+  var deferred = q.defer();
+  var fileName = scene + '.markdown';
+  var file = files[fileName];
 
-    if (!isDev() && file === undefined) {
-      defer.reject('Scene not found');
-      return;
-    }
+  if (!isDev() && file === undefined) {
+    deferred.reject(new Error('Scene not found'));
+    return deferred.promise;
+  }
 
-    var fileURL;
+  var fileURL;
 
-    if (isDev()) {
-      fileURL = '/dev/' + fileName;
-    } else {
-      fileURL = file.raw_url;
-    }
+  if (isDev()) {
+    fileURL = '/dev/' + fileName;
+  } else {
+    fileURL = file.raw_url;
+  }
 
-
-    $.get(fileURL)
-      .done(defer.resolve)
-      .fail(function (jsXHR) {
-        defer.reject(jsXHR.statusText);
-      });
-  }).promise();
+  return q($.get(fileURL))
+    .then(deferred.resolve)
+    .catch(function (xhr) {
+      throw new Error(xhr.statusText);
+    });
 };
 
 //
@@ -230,18 +227,12 @@ getFileContent = function (scene) {
 // the property is injected to override global stylesheet rules.
 //
 extractYFM = function (scene, content) {
-  return $.Deferred(function (defer) {
-    try {
-      var parsed = yfm(content);
-      $.extend(window.state, parsed.context.state);
-      if (parsed.context.style !== undefined) {
-        injectSceneStyle(scene, parsed.context.style);
-      }
-      defer.resolve(parsed);
-    } catch (e) {
-      defer.reject(e);
-    }
-  }).promise();
+  var parsed = yfm(content);
+  $.extend(window.state, parsed.context.state);
+  if (parsed.context.style !== undefined) {
+    injectSceneStyle(scene, parsed.context.style);
+  }
+  return parsed;
 };
 
 //
@@ -268,13 +259,7 @@ injectSceneStyle = function (scene, content) {
 // string.
 //
 renderMustache = function (content) {
-  return $.Deferred(function (defer) {
-    try {
-      defer.resolve(mustache.render(content, window.state));
-    } catch (e) {
-      defer.reject(e);
-    }
-  }).promise();
+  return mustache.render(content, window.state);
 };
 
 //
@@ -282,13 +267,7 @@ renderMustache = function (content) {
 // string.
 //
 renderMarkdown = function (content) {
-  return $.Deferred(function (defer) {
-    try {
-      defer.resolve(marked(content));
-    } catch (e) {
-      defer.reject(e);
-    }
-  }).promise();
+  return marked(content);
 };
 
 //
@@ -299,7 +278,7 @@ renderMarkdown = function (content) {
 // in the DOM.
 //
 outputContent = function (content) {
-  return $('#content').html(content).promise();
+  return q($('#content').html(content).promise());
 };
 
 //
@@ -309,10 +288,8 @@ outputContent = function (content) {
 // files parsed content indexed by scene name.
 //
 cacheContent = function (scene, content) {
-  return $.Deferred(function (defer) {
-    cache[scene] = content;
-    defer.resolve(content);
-  }).promise();
+  cache[scene] = content;
+  return content;
 };
 
 //
@@ -342,12 +319,10 @@ handleInternalLinks = function (contentElement) {
 // Run a scene initialization function.
 //
 runSceneInit = function (parsed) {
-  return $.Deferred(function (defer) {
-    if (parsed.context.init !== undefined) {
-      parsed.context.init();
-    }
-    defer.resolve(parsed.content);
-  }).promise();
+  if (parsed.context.init !== undefined) {
+    parsed.context.init();
+  }
+  return parsed.content;
 };
 
 //
@@ -355,14 +330,16 @@ runSceneInit = function (parsed) {
 // entry changes between two history entries for the same document.
 //
 // If the `files` array is undefined we need to initialize the text adventure,
-// otherwise we can just render the current.
+// otherwise we can just render the current scene.
 //
 window.onpopstate = function () {
-  if (files === undefined) {
+  if (!loaded) {
     return init();
   }
 
-  runScene(document.location.hash);
+  if (files !== undefined) {
+    runScene(document.location.hash);
+  }
 };
 
 //
