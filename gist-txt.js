@@ -23,7 +23,7 @@ var $ = require('jquery');
 var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
-var Q = require('q');
+var q = require('q');
 
 var initUI;
 var applyStylesheet;
@@ -73,7 +73,7 @@ var init = function () {
     return;
   }
 
-  return Q($.getJSON('https://api.github.com/gists/' + gistId))
+  return q($.getJSON('https://api.github.com/gists/' + gistId))
     .then(function (gist) {
       files = gist.files;
       return initUI(scene);
@@ -104,9 +104,9 @@ initUI = function (scene) {
 // optional).
 //
 applyStylesheet = function () {
-  var deferred = Q.defer();
+  var deferred = q.defer();
   if (files['style.css'] !== undefined) {
-    return Q($.get(files['style.css'].raw_url))
+    return q($.get(files['style.css'].raw_url))
       .then(function (content) {
         $('<style>')
           .attr('type', 'text/css')
@@ -146,9 +146,9 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    promise = Q.fcall(runSceneInit.bind(this, cache[scene]));
+    promise = q.fcall(runSceneInit.bind(this, cache[scene]));
   } else {
-    promise = Q.when(getFileContent(scene))
+    promise = getFileContent(scene)
       .then(extractYFM.bind(this, scene))
       .then(cacheContent.bind(this, scene))
       .then(runSceneInit);
@@ -194,11 +194,13 @@ compileAndDisplayFooter = function () {
 // deferred object with the result content as argument of the callback.
 //
 getFileContent = function (scene) {
+  var deferred = q.defer();
   var fileName = scene + '.markdown';
   var file = files[fileName];
 
   if (!isDev() && file === undefined) {
-    throw new Error('Scene not found');
+    deferred.reject(new Error('Scene not found'));
+    return deferred.promise;
   }
 
   var fileURL;
@@ -209,7 +211,8 @@ getFileContent = function (scene) {
     fileURL = file.raw_url;
   }
 
-  return Q($.get(fileURL))
+  return q($.get(fileURL))
+    .then(deferred.resolve)
     .catch(function (xhr) {
       throw new Error(xhr.statusText);
     });
@@ -275,7 +278,7 @@ renderMarkdown = function (content) {
 // in the DOM.
 //
 outputContent = function (content) {
-  return Q($('#content').html(content).promise());
+  return q($('#content').html(content).promise());
 };
 
 //
