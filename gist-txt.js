@@ -106,15 +106,17 @@ initUI = function (scene) {
 applyStylesheet = function () {
   var deferred = q.defer();
   if (files['style.css'] !== undefined) {
-    return q($.get(files['style.css'].raw_url))
+    q($.get(files['style.css'].raw_url))
       .then(function (content) {
         $('<style>')
           .attr('type', 'text/css')
           .html(content)
           .appendTo('head');
-      });
+      })
+      .fin(deferred.resolve)
+  } else {
+    deferred.resolve();
   }
-  deferred.resolve();
   return deferred.promise;
 };
 
