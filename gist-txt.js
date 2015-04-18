@@ -15,6 +15,7 @@ var gistId;
 var currentScene;
 var files;
 var cache = {};
+var loaded = false;
 window.state = {};
 
 var VERSION = require('./package.json').version;
@@ -62,6 +63,7 @@ var isDev;
 // scene.
 //
 var init = function () {
+  loaded = true;
   var scene = parse(document.location.hash);
 
   if (isDev()) {
@@ -355,14 +357,16 @@ runSceneInit = function (parsed) {
 // entry changes between two history entries for the same document.
 //
 // If the `files` array is undefined we need to initialize the text adventure,
-// otherwise we can just render the current.
+// otherwise we can just render the current scene.
 //
 window.onpopstate = function () {
-  if (files === undefined) {
+  if (!loaded) {
     return init();
   }
 
-  runScene(document.location.hash);
+  if (files !== undefined) {
+    runScene(document.location.hash);
+  }
 };
 
 //
