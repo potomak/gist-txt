@@ -304,11 +304,13 @@ deferred object with the result content as argument of the callback.</p>
     fileURL = file.raw_url;
   }
 
-  <span class="hljs-keyword">return</span> q($.get(fileURL))
+  q($.get(fileURL))
     .then(deferred.resolve)
     .catch(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(xhr)</span> </span>{
       <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(xhr.statusText);
     });
+
+  <span class="hljs-keyword">return</span> deferred.promise;
 };</pre></div></div>
             
         </li>
