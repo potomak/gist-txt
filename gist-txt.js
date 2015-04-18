@@ -113,7 +113,7 @@ applyStylesheet = function () {
           .html(content)
           .appendTo('head');
       })
-      .fin(deferred.resolve)
+      .fin(deferred.resolve);
   } else {
     deferred.resolve();
   }
