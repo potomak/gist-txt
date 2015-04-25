@@ -243,6 +243,7 @@ current scene’s stylesheet is activated.</p>
     .then(outputContent)
     .then(handleInternalLinks)
     .then(<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">()</span> </span>{
+      $(<span class="hljs-string">'body'</span>).scrollTop(<span class="hljs-number">0</span>);
       $(<span class="hljs-string">'#'</span> + currentScene + <span class="hljs-string">'-style'</span>).prop(<span class="hljs-string">'disabled'</span>, <span class="hljs-literal">true</span>);
       $(<span class="hljs-string">'#'</span> + scene + <span class="hljs-string">'-style'</span>).prop(<span class="hljs-string">'disabled'</span>, <span class="hljs-literal">false</span>);
       currentScene = scene;
