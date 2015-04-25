@@ -13,6 +13,7 @@
 //
 var gistId;
 var currentScene;
+var currentTrack;
 var files;
 var cache = {};
 var loaded = false;
@@ -37,6 +38,8 @@ var renderMustache;
 var renderMarkdown;
 var outputContent;
 var handleInternalLinks;
+var playTrack;
+var playSceneTrack;
 var updateGameState;
 var runSceneInit;
 var runScene;
@@ -158,6 +161,7 @@ loadAndRender = function (scene) {
   }
 
   return promise
+    .then(playTrack)
     .then(updateGameState)
     .then(renderMustache)
     .then(renderMarkdown)
@@ -256,6 +260,44 @@ injectSceneStyle = function (scene, content) {
     .attr('type', 'text/css')
     .html(content)
     .appendTo('head');
+};
+
+//
+// Play a track associated to the current scene.
+//
+// If there's a track already playing it fades its volume and start playing the
+// current one.
+//
+// Audio files should be included in two formats: ogg and mp3.
+//
+// To play a track in a scene add the `track` key to current scene's YAML
+// header and set its value to the name of the audio file without the
+// extension.
+//
+playTrack = function (parsed) {
+  if (parsed.context.track !== undefined) {
+    if (currentTrack !== undefined && !currentTrack.paused) {
+      $(currentTrack).animate({ volume: 0 }, 1000, playSceneTrack.bind(this, parsed.context.track));
+    } else {
+      playSceneTrack(parsed.context.track);
+    }
+  }
+  return parsed;
+};
+
+//
+// An helper function that creates a new `Audio` element with the `autoplay`
+// and `loop` attributes set to true and loads a file audio based on current
+// browser audio capabilities.
+//
+playSceneTrack = function (track) {
+  var ext = (new Audio().canPlayType('audio/ogg; codecs=vorbis')) ? 'ogg' : 'mp3';
+  var filename = track + '.' + ext;
+  var track = new Audio();
+  track.autoplay = true;
+  track.loop = true;
+  track.src = files[filename].raw_url;
+  currentTrack = track;
 };
 
 //
