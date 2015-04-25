@@ -168,6 +168,7 @@ loadAndRender = function (scene) {
     .then(outputContent)
     .then(handleInternalLinks)
     .then(function () {
+      $('body').scrollTop(0);
       $('#' + currentScene + '-style').prop('disabled', true);
       $('#' + scene + '-style').prop('disabled', false);
       currentScene = scene;
