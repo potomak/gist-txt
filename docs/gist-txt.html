@@ -53,6 +53,7 @@ adventure.</p>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-keyword">var</span> gistId;
 <span class="hljs-keyword">var</span> currentScene;
+<span class="hljs-keyword">var</span> currentTrack;
 <span class="hljs-keyword">var</span> files;
 <span class="hljs-keyword">var</span> cache = {};
 <span class="hljs-keyword">var</span> loaded = <span class="hljs-literal">false</span>;
@@ -77,6 +78,8 @@ adventure.</p>
 <span class="hljs-keyword">var</span> renderMarkdown;
 <span class="hljs-keyword">var</span> outputContent;
 <span class="hljs-keyword">var</span> handleInternalLinks;
+<span class="hljs-keyword">var</span> playTrack;
+<span class="hljs-keyword">var</span> playSceneTrack;
 <span class="hljs-keyword">var</span> updateGameState;
 <span class="hljs-keyword">var</span> runSceneInit;
 <span class="hljs-keyword">var</span> runScene;
@@ -233,6 +236,7 @@ current scene’s stylesheet is activated.</p>
   }
 
   <span class="hljs-keyword">return</span> promise
+    .then(playTrack)
     .then(updateGameState)
     .then(renderMustache)
     .then(renderMarkdown)
@@ -376,6 +380,61 @@ visits of the scene.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
               </div>
+              <p>Play a track associated to the current scene.</p>
+<p>If there’s a track already playing it fades its volume and start playing the
+current one.</p>
+<p>Audio files should be included in two formats: ogg and mp3.</p>
+<p>To play a track in a scene add the <code>track</code> key to current scene’s YAML
+header and set its value to the name of the audio file without the
+extension.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>playTrack = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(parsed)</span> </span>{
+  <span class="hljs-keyword">if</span> (parsed.context.track !== <span class="hljs-literal">undefined</span>) {
+    <span class="hljs-keyword">if</span> (currentTrack !== <span class="hljs-literal">undefined</span> &amp;&amp; !currentTrack.paused) {
+      $(currentTrack).animate({ volume: <span class="hljs-number">0</span> }, <span class="hljs-number">1000</span>, playSceneTrack.bind(<span class="hljs-keyword">this</span>, parsed.context.track));
+    } <span class="hljs-keyword">else</span> {
+      playSceneTrack(parsed.context.track);
+    }
+  }
+  <span class="hljs-keyword">return</span> parsed;
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
+              </div>
+              <p>An helper function that creates a new <code>Audio</code> element with the <code>autoplay</code>
+and <code>loop</code> attributes set to true and loads a file audio based on current
+browser audio capabilities.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>playSceneTrack = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-params">(track)</span> </span>{
+  <span class="hljs-keyword">var</span> ext = (<span class="hljs-keyword">new</span> Audio().canPlayType(<span class="hljs-string">'audio/ogg; codecs=vorbis'</span>)) ? <span class="hljs-string">'ogg'</span> : <span class="hljs-string">'mp3'</span>;
+  <span class="hljs-keyword">var</span> filename = track + <span class="hljs-string">'.'</span> + ext;
+  <span class="hljs-keyword">var</span> track = <span class="hljs-keyword">new</span> Audio();
+  track.autoplay = <span class="hljs-literal">true</span>;
+  track.loop = <span class="hljs-literal">true</span>;
+  track.src = files[filename].raw_url;
+  currentTrack = track;
+};</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-13">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-13">&#182;</a>
+              </div>
               <p>Mustache content is rendered using game’s global state (<code>window.state</code>) as
 its view object.</p>
 
@@ -388,11 +447,11 @@ its view object.</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>Markdown content is rendered.</p>
 
@@ -405,11 +464,11 @@ its view object.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>The HTML rendered content is the main content of the scene. It gets appended
 to the <code>#content</code> element in the DOM.</p>
@@ -425,11 +484,11 @@ in the DOM.</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Caching content prevents waste of API calls and band for slow connections.</p>
 <p>The cache consists of a simple JavaScript object that contains gist’s files
@@ -445,11 +504,11 @@ parsed content indexed by scene name.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <h2 id="scene-navigation">Scene navigation</h2>
 <p>Internal links click events are overridden to handle navigation between
@@ -474,11 +533,11 @@ form:</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>Extends game state with current scene’s state.</p>
 
@@ -492,11 +551,11 @@ form:</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Run a scene initialization function.</p>
 
@@ -512,11 +571,11 @@ form:</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-20">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-20">&#182;</a>
               </div>
               <p>A <code>popstate</code> event is dispatched to the window every time the active history
 entry changes between two history entries for the same document.</p>
@@ -538,11 +597,11 @@ otherwise we can just render the current scene.</p>
         </li>
         
         
-        <li id="section-19">
+        <li id="section-21">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <h2 id="parsing-location-hash-and-running-a-scene">Parsing location hash and running a scene</h2>
 <p>Running a scene includes:</p>
@@ -561,11 +620,11 @@ otherwise we can just render the current scene.</p>
         </li>
         
         
-        <li id="section-20">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-20">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>A gist-txt location hash has the form:</p>
 <pre><code>#&lt;gist-id&gt;<span class="hljs-regexp">/&lt;scene&gt;</span>
@@ -600,11 +659,11 @@ scene, otherwise return the scene name found.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p><code>toggleError</code> and <code>toggleLoading</code> help showing error and loading messages.</p>
 
@@ -621,11 +680,11 @@ toggleLoading = <span class="hljs-function"><span class="hljs-keyword">function<
         </li>
         
         
-        <li id="section-22">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>During development you can use the <code>DEV</code> special gist id to bypass requests
 to the local development server to the <code>/dev</code> path.</p>
@@ -639,11 +698,11 @@ to the local development server to the <code>/dev</code> path.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <h2 id="it-s-time-to-play">It’s time to play</h2>
 <p>Let’s play by starting the engine at <code>document.ready</code> event.</p>
