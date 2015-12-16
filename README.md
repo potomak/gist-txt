@@ -102,7 +102,7 @@ http://potomak.github.io/gist-txt/docs/gist-txt.html.
 Generate documentation for the project by running:
 
 ```sh
-$ npm run doc
+npm run-script doc
 ```
 
 ## Building the bundle
@@ -110,7 +110,7 @@ $ npm run doc
 Run:
 
 ```sh
-$ npm run build
+npm run-script build
 ```
 
 to build a minimized bundle that contains the main script (`gist-txt.js`) and
@@ -121,30 +121,24 @@ all dependencies.
 During development you want to be able to debug your code and continuously
 rebuild the bundle after any change to your code.
 
-You can run:
+Run:
 
 ```sh
-$ npm run watch
+npm run-script watch
 ```
 
 to build a development version of the bundle that includes source maps and to
 automatically rebuild the bundle on code changes.
 
-### Static server
+#### HTTP server
 
-The site can be compiled and served locally using Jekyll:
-
-```sh
-$ jekyll s
-```
-
-Or you can run a Python static server:
+Run the HTTP server:
 
 ```sh
-$ python -m SimpleHTTPServer
+npm run-script serve
 ```
 
-Note: using `SimpleHTTPServer` only `index.html` will be served correctly.
+and open http://localhost:8080.
 
 ## Story development environment
 

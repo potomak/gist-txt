@@ -1,6 +1,0 @@
-# Site settings
-title: gist-txt
-
-# Build settings
-markdown: kramdown
-exclude: [node_modules]
