@@ -285,6 +285,7 @@ playTrack = function (parsed) {
 // browser audio capabilities.
 //
 playSceneTrack = function (track) {
+  // TODO: check audio support during initialization
   var ext = (new Audio().canPlayType('audio/ogg; codecs=vorbis')) ? 'ogg' : 'mp3';
   var filename = track + '.' + ext;
 
