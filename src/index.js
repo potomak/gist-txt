@@ -132,9 +132,8 @@ function loadAndRender(scene) {
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
+    .then(scrollTop)
     .then(() => {
-      document.body.scrollTop = 0
-      document.documentElement.scrollTop = 0
       var currentSceneStyle = document.querySelector("#" + currentScene + "-style")
       var sceneStyle = document.querySelector("#" + scene + "-style")
       if (currentSceneStyle) {
@@ -336,6 +335,11 @@ function runSceneInit(parsed) {
   if (parsed.data.init !== undefined) {
     parsed.data.init()
   }
+}
+
+function scrollTop() {
+  document.body.scrollTop = 0
+  document.documentElement.scrollTop = 0
 }
 
 //
