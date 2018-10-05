@@ -19,12 +19,12 @@ var cache = {};
 var loaded = false;
 window.state = {};
 
-var mustache = require('mustache');
-var marked = require('marked');
-var esprima = require('esprima');
+import mustache from 'mustache';
+import marked from 'marked';
+import esprima from 'esprima';
 window.esprima = esprima;
-var yaml = require('js-yaml');
-var matter = require('gray-matter');
+import yaml from 'js-yaml';
+import matter from 'gray-matter';
 
 var initUI;
 var applyStylesheet;
