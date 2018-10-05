@@ -134,8 +134,8 @@ function loadAndRender(scene) {
     .then(handleInternalLinks)
     .then(scrollTop)
     .then(() => {
-      var currentSceneStyle = document.querySelector("#" + currentScene + "-style")
-      var sceneStyle = document.querySelector("#" + scene + "-style")
+      var currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
+      var sceneStyle = document.getElementById(sceneStyleId(scene))
       if (currentSceneStyle) {
         currentSceneStyle.disabled = true
       }
@@ -175,18 +175,23 @@ function getFileContent(filename) {
 // If data's `style` property is defined, a `<style>` tag with the content of
 // the property is injected to override global stylesheet rules.
 //
-// Scene's stylesheet `<style>` element has an `id` with the form:
-//
-//     scene + '-style'
-//
 function extractYFM(scene, content) {
   var parsed = matter(content, {
     engines: { yaml: yaml.load.bind(yaml) }
   })
   if (parsed.data.style !== undefined) {
-    appendStyle(parsed.data.style, { id: scene + "-style" })
+    appendStyle(parsed.data.style, { id: sceneStyleId(scene) })
   }
   return parsed
+}
+
+//
+// Scene's stylesheet `<style>` element has an `id` with the form:
+//
+//     scene + '-style'
+//
+function sceneStyleId(scene) {
+  return scene + "-style"
 }
 
 //
