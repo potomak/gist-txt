@@ -277,7 +277,7 @@ function renderMarkdown(content) {
 // in the DOM.
 //
 function outputContent(content) {
-  var contentElement = document.querySelector("#content")
+  var contentElement = document.getElementById("content")
   contentElement.innerHTML = content
   return contentElement
 }
@@ -413,7 +413,7 @@ function parse(hash) {
 // `toggleError` and `toggleLoading` help showing error and loading messages.
 //
 function toggleError(display, errorMessage) {
-  var element = document.querySelector("#error")
+  var element = document.getElementById("error")
   element.innerHTML = "Error: " + errorMessage
   if (display) {
     element.style.display = "block"
@@ -423,7 +423,7 @@ function toggleError(display, errorMessage) {
 }
 
 function toggleLoading(display) {
-  var element = document.querySelector("#loading")
+  var element = document.getElementById("loading")
   if (display) {
     element.style.display = "block"
   } else {
