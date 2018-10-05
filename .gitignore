@@ -1,4 +1,3 @@
 /node_modules
-/bundle.js
-/_site
-/dev
+/dist/main.js
+/dist/dev

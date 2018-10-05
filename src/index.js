@@ -19,7 +19,6 @@ var cache = {};
 var loaded = false;
 window.state = {};
 
-var VERSION = require('./package.json').version;
 var mustache = require('mustache');
 var marked = require('marked');
 var esprima = require('esprima');
@@ -190,13 +189,11 @@ loadAndRender = function (scene) {
 // show:
 //
 // * a link to the original gist
-// * current version of the engine
 //
 compileAndDisplayFooter = function () {
   var source = document.querySelector('a#source');
   source.setAttribute('href', 'https://gist.github.com/' + gistId);
   source.innerHTML = gistId;
-  document.querySelector('span#version').innerHTML = VERSION;
   document.querySelector('footer').style.display = 'block';
 };
 
