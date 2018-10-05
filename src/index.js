@@ -55,7 +55,7 @@ function init() {
 
   return httpGet("https://api.github.com/gists/" + gistId)
     .then(JSON.parse)
-    .then(function (gist) {
+    .then(gist => {
       files = gist.files
       return initUI(scene)
     })
@@ -84,9 +84,9 @@ function initUI(scene) {
 // optional).
 //
 function applyStylesheet() {
-  return getFileContent("style.css").then(function (content) {
-    appendStyle(content, {})
-  }).catch()
+  return getFileContent("style.css")
+    .then(content => appendStyle(content, {}))
+    .catch()
 }
 
 //
@@ -138,7 +138,7 @@ function loadAndRender(scene) {
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
-    .then(function () {
+    .then(() => {
       document.body.scrollTop = 0
       document.documentElement.scrollTop = 0
       var currentSceneStyle = document.querySelector("#" + currentScene + "-style")
@@ -172,9 +172,7 @@ function compileAndDisplayFooter() {
 // Sends a GET request to file's `raw_url` if it's present in the `files` list.
 //
 function getFileContent(filename) {
-  return file(filename).then(function () {
-    return httpGet(fileURL(filename))
-  })
+  return file(filename).then(() => httpGet(fileURL(filename)))
 }
 
 //
@@ -313,8 +311,8 @@ function cacheContent(scene, content) {
 // `window.history` object to allow navigation using back and forward buttons.
 //
 function handleInternalLinks(contentElement) {
-  contentElement.querySelectorAll("a").forEach(function (anchor) {
-    anchor.addEventListener("click", function (event) {
+  contentElement.querySelectorAll("a").forEach(anchor => {
+    anchor.addEventListener("click", event => {
       event.preventDefault()
       var hash = "#" + gistId + "/" + anchor.getAttribute("href")
       runScene(hash)
@@ -348,7 +346,7 @@ function runSceneInit(parsed) {
 // If the `files` array is undefined we need to initialize the text adventure,
 // otherwise we can just render the current scene.
 //
-window.onpopstate = function () {
+window.onpopstate = () => {
   if (!loaded) {
     return init()
   }
@@ -469,10 +467,10 @@ function file(filename) {
 // Sends a HTTP GET request to url.
 //
 function httpGet(url) {
-  return new Promise(function (resolve, reject) {
+  return new Promise((resolve, reject) => {
     var xhr = new XMLHttpRequest()
     xhr.open("GET", url)
-    xhr.onload = function () {
+    xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
         resolve(xhr.responseText)
       } else {
