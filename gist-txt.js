@@ -31,7 +31,7 @@ var loadAndRender;
 var compileAndDisplayFooter;
 var getFileContent;
 var extractYFM;
-var injectSceneStyle;
+var appendStyle;
 var cacheContent;
 var renderMustache;
 var renderMarkdown;
@@ -118,11 +118,7 @@ applyStylesheet = function () {
   if (fileExists('style.css')) {
     httpGet(fileURL('style.css'))
       .then(function (xhr) {
-        var style = document.createElement('style');
-        style.setAttribute('type', 'text/css');
-        style.innerHTML = xhr.responseText;
-        var head = document.querySelector('head');
-        head.append(style);
+        appendStyle(xhr.responseText, {});
       })
       .fin(deferred.resolve);
   } else {
@@ -243,28 +239,29 @@ getFileContent = function (scene) {
 // If context's `style` property is defined a `<style>` tag with the content of
 // the property is injected to override global stylesheet rules.
 //
+// Scene's stylesheet `<style>` element has an `id` with the form:
+//
+//     scene + '-style'
+//
 extractYFM = function (scene, content) {
   var parsed = yfm(content);
   if (parsed.context.style !== undefined) {
-    injectSceneStyle(scene, parsed.context.style);
+    appendStyle(parsed.context.style, { id: scene + '-style' });
   }
   return parsed;
 };
 
 //
-// To inject a scene's stylesheet a `<style>` element with the id attribute in
-// the form:
+// Appends a `<style>` element with `content` in the DOM's `<head>`.
 //
-//     scene + '-style'
-//
-// get appended into the `<head>` of the HTML document.
-//
-// Scene stylesheets are disabled on scene transitions and re-enabled on new
-// visits of the scene.
-//
-injectSceneStyle = function (scene, content) {
+appendStyle = function (content, attributes) {
   var style = document.createElement('style');
-  style.setAttribute('id', scene + '-style');
+  var name;
+  for (name in attributes) {
+    if (attributes.hasOwnProperty(name)) {
+      style.setAttribute(name, attributes[name]);
+    }
+  }
   style.setAttribute('type', 'text/css');
   style.innerHTML = content;
   var head = document.querySelector('head');
