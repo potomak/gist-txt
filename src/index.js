@@ -1,5 +1,3 @@
-'use strict';
-
 //
 // Gist-txt is a minimal text adventure engine that helps game designers to
 // create text adventures from GitHub gists.
@@ -11,47 +9,20 @@
 //
 // Get more info at https://github.com/potomak/gist-txt.
 //
-var gistId;
-var currentScene;
-var currentTrack;
-var files;
-var cache = {};
-var loaded = false;
-window.state = {};
+var gistId
+var currentScene
+var currentTrack
+var files
+var cache = {}
+var loaded = false
+window.state = {}
 
-import mustache from 'mustache';
-import marked from 'marked';
-import esprima from 'esprima';
-window.esprima = esprima;
-import yaml from 'js-yaml';
-import matter from 'gray-matter';
-
-var initUI;
-var applyStylesheet;
-var loadAndRender;
-var compileAndDisplayFooter;
-var getFileContent;
-var extractYFM;
-var appendStyle;
-var cacheContent;
-var renderMustache;
-var renderMarkdown;
-var outputContent;
-var handleInternalLinks;
-var playTrack;
-var playSceneTrack;
-var updateGameState;
-var runSceneInit;
-var runScene;
-var parse;
-var toggleError;
-var toggleLoading;
-var isDev;
-var fileURL;
-var fileExists;
-var file;
-var httpGet;
-var extend;
+import mustache from "mustache"
+import marked from "marked"
+import esprima from "esprima"
+window.esprima = esprima
+import yaml from "js-yaml"
+import matter from "gray-matter"
 
 //
 // ## Initialization
@@ -72,25 +43,25 @@ var extend;
 // A successful response triggers the loading and rendering of the selected
 // scene.
 //
-var init = function () {
-  loaded = true;
-  var scene = parse(document.location.hash);
+function init() {
+  loaded = true
+  var scene = parse(document.location.hash)
 
   if (isDev()) {
-    files = {};
-    initUI(scene);
-    return;
+    files = {}
+    initUI(scene)
+    return
   }
 
-  return httpGet('https://api.github.com/gists/' + gistId)
+  return httpGet("https://api.github.com/gists/" + gistId)
     .then(JSON.parse)
     .then(function (gist) {
-      files = gist.files;
-      return initUI(scene);
+      files = gist.files
+      return initUI(scene)
     })
     .catch(toggleError.bind(this, true))
-    .finally(toggleLoading.bind(this, false));
-};
+    .finally(toggleLoading.bind(this, false))
+}
 
 //
 // UI initialization consists of three steps:
@@ -99,11 +70,11 @@ var init = function () {
 // 1. loading and rendering of the selected scene
 // 1. compilation and display of site footer
 //
-initUI = function (scene) {
+function initUI(scene) {
   return applyStylesheet()
     .then(loadAndRender.bind(this, scene))
-    .then(compileAndDisplayFooter);
-};
+    .then(compileAndDisplayFooter)
+}
 
 //
 // If gist's files include a `style.css` its content is used to determine the
@@ -112,11 +83,11 @@ initUI = function (scene) {
 // The method returns a promise that is always resolved (the stylesheet is
 // optional).
 //
-applyStylesheet = function () {
-  return getFileContent('style.css').then(function (content) {
-    appendStyle(content, {});
-  }).catch();
-};
+function applyStylesheet() {
+  return getFileContent("style.css").then(function (content) {
+    appendStyle(content, {})
+  }).catch()
+}
 
 //
 // ## Loading and rendering scenes
@@ -146,18 +117,18 @@ applyStylesheet = function () {
 // variable `currentScene`, then previous scene's stylesheet is disactivated and
 // current scene's stylesheet is activated.
 //
-loadAndRender = function (scene) {
-  toggleError(false);
-  toggleLoading(true);
+function loadAndRender(scene) {
+  toggleError(false)
+  toggleLoading(true)
 
-  var promise;
+  var promise
   if (cache[scene] !== undefined) {
-    promise = Promise.resolve(runSceneInit(cache[scene]));
+    promise = Promise.resolve(runSceneInit(cache[scene]))
   } else {
-    promise = getFileContent(scene + '.markdown')
+    promise = getFileContent(scene + ".markdown")
       .then(extractYFM.bind(this, scene))
       .then(cacheContent.bind(this, scene))
-      .then(runSceneInit);
+      .then(runSceneInit)
   }
 
   return promise
@@ -168,21 +139,21 @@ loadAndRender = function (scene) {
     .then(outputContent)
     .then(handleInternalLinks)
     .then(function () {
-      document.body.scrollTop = 0;
-      document.documentElement.scrollTop = 0;
-      var currentSceneStyle = document.querySelector('#' + currentScene + '-style');
-      var sceneStyle = document.querySelector('#' + scene + '-style');
+      document.body.scrollTop = 0
+      document.documentElement.scrollTop = 0
+      var currentSceneStyle = document.querySelector("#" + currentScene + "-style")
+      var sceneStyle = document.querySelector("#" + scene + "-style")
       if (currentSceneStyle) {
-        currentSceneStyle.disabled = true;
+        currentSceneStyle.disabled = true
       }
       if (sceneStyle) {
-        sceneStyle.disabled = false;
+        sceneStyle.disabled = false
       }
-      currentScene = scene;
+      currentScene = scene
     })
     .catch(toggleError.bind(this, true))
-    .finally(toggleLoading.bind(this, false));
-};
+    .finally(toggleLoading.bind(this, false))
+}
 
 //
 // If the gist response is successful the footer gets compiled and displayed to
@@ -190,21 +161,21 @@ loadAndRender = function (scene) {
 //
 // * a link to the original gist
 //
-compileAndDisplayFooter = function () {
-  var source = document.querySelector('a#source');
-  source.setAttribute('href', 'https://gist.github.com/' + gistId);
-  source.innerHTML = gistId;
-  document.querySelector('footer').style.display = 'block';
-};
+function compileAndDisplayFooter() {
+  var source = document.querySelector("a#source")
+  source.setAttribute("href", "https://gist.github.com/" + gistId)
+  source.innerHTML = gistId
+  document.querySelector("footer").style.display = "block"
+}
 
 //
 // Sends a GET request to file's `raw_url` if it's present in the `files` list.
 //
-getFileContent = function (filename) {
+function getFileContent(filename) {
   return file(filename).then(function () {
-    return httpGet(fileURL(filename));
-  });
-};
+    return httpGet(fileURL(filename))
+  })
+}
 
 //
 // The YAML Front Matter is extracted from the original content. The resulting
@@ -217,32 +188,32 @@ getFileContent = function (filename) {
 //
 //     scene + '-style'
 //
-extractYFM = function (scene, content) {
+function extractYFM(scene, content) {
   var parsed = matter(content, {
     engines: { yaml: yaml.load.bind(yaml) }
-  });
+  })
   if (parsed.data.style !== undefined) {
-    appendStyle(parsed.data.style, { id: scene + '-style' });
+    appendStyle(parsed.data.style, { id: scene + "-style" })
   }
-  return parsed;
-};
+  return parsed
+}
 
 //
 // Appends a `<style>` element with `content` in the DOM's `<head>`.
 //
-appendStyle = function (content, attributes) {
-  var style = document.createElement('style');
-  var name;
+function appendStyle(content, attributes) {
+  var style = document.createElement("style")
+  var name
   for (name in attributes) {
     if (attributes.hasOwnProperty(name)) {
-      style.setAttribute(name, attributes[name]);
+      style.setAttribute(name, attributes[name])
     }
   }
-  style.setAttribute('type', 'text/css');
-  style.innerHTML = content;
-  var head = document.querySelector('head');
-  head.append(style);
-};
+  style.setAttribute("type", "text/css")
+  style.innerHTML = content
+  var head = document.querySelector("head")
+  head.append(style)
+}
 
 //
 // Play a track associated to the current scene.
@@ -258,50 +229,50 @@ appendStyle = function (content, attributes) {
 // header and set its value to the name of the audio file without the
 // extension.
 //
-playTrack = function (parsed) {
+function playTrack(parsed) {
   if (parsed.data.track !== undefined) {
     if (currentTrack !== undefined && !currentTrack.paused) {
-      currentTrack.pause();
+      currentTrack.pause()
     } else {
-      playSceneTrack(parsed.data.track);
+      playSceneTrack(parsed.data.track)
     }
   }
-  return parsed;
-};
+  return parsed
+}
 
 //
 // An helper function that creates a new `Audio` element with the `autoplay`
 // and `loop` attributes set to true and loads a file audio based on current
 // browser audio capabilities.
 //
-playSceneTrack = function (track) {
+function playSceneTrack(track) {
   // TODO: check audio support during initialization
-  var ext = (new Audio().canPlayType('audio/ogg; codecs=vorbis')) ? 'ogg' : 'mp3';
-  var filename = track + '.' + ext;
+  var ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
+  var filename = track + "." + ext
 
   if (fileExists(filename)) {
-    var audio = new Audio();
-    audio.autoplay = true;
-    audio.loop = true;
-    audio.src = fileURL(filename);
-    currentTrack = audio;
+    var audio = new Audio()
+    audio.autoplay = true
+    audio.loop = true
+    audio.src = fileURL(filename)
+    currentTrack = audio
   }
-};
+}
 
 //
 // Mustache content is rendered using game's global state (`window.state`) as
 // its view object.
 //
-renderMustache = function (content) {
-  return mustache.render(content, window.state);
-};
+function renderMustache(content) {
+  return mustache.render(content, window.state)
+}
 
 //
 // Markdown content is rendered.
 //
-renderMarkdown = function (content) {
-  return marked(content);
-};
+function renderMarkdown(content) {
+  return marked(content)
+}
 
 //
 // The HTML rendered content is the main content of the scene. It gets appended
@@ -310,11 +281,11 @@ renderMarkdown = function (content) {
 // The returning promise fulfills after the `content` string has been inserted
 // in the DOM.
 //
-outputContent = function (content) {
-  var contentElement = document.querySelector('#content');
-  contentElement.innerHTML = content;
-  return Promise.resolve(contentElement);
-};
+function outputContent(content) {
+  var contentElement = document.querySelector("#content")
+  contentElement.innerHTML = content
+  return Promise.resolve(contentElement)
+}
 
 //
 // Caching content prevents waste of API calls and band for slow connections.
@@ -322,10 +293,10 @@ outputContent = function (content) {
 // The cache consists of a simple JavaScript object that contains gist's files
 // parsed content indexed by scene name.
 //
-cacheContent = function (scene, content) {
-  cache[scene] = content;
-  return content;
-};
+function cacheContent(scene, content) {
+  cache[scene] = content
+  return content
+}
 
 //
 // ## Scene navigation
@@ -341,34 +312,34 @@ cacheContent = function (scene, content) {
 // At every internal link click event a new state get pushed in the
 // `window.history` object to allow navigation using back and forward buttons.
 //
-handleInternalLinks = function (contentElement) {
-  contentElement.querySelectorAll('a').forEach(function (anchor) {
-    anchor.addEventListener('click', function (event) {
-      event.preventDefault();
-      var hash = '#' + gistId + '/' + anchor.getAttribute('href');
-      runScene(hash);
-      window.history.pushState(null, null, document.location.pathname + hash);
-    });
-  });
-};
+function handleInternalLinks(contentElement) {
+  contentElement.querySelectorAll("a").forEach(function (anchor) {
+    anchor.addEventListener("click", function (event) {
+      event.preventDefault()
+      var hash = "#" + gistId + "/" + anchor.getAttribute("href")
+      runScene(hash)
+      window.history.pushState(null, null, document.location.pathname + hash)
+    })
+  })
+}
 
 //
 // Extends game state with current scene's state.
 //
-updateGameState = function (parsed) {
-  extend(window.state, parsed.data.state);
-  return parsed.content;
-};
+function updateGameState(parsed) {
+  extend(window.state, parsed.data.state)
+  return parsed.content
+}
 
 //
 // Run a scene initialization function.
 //
-runSceneInit = function (parsed) {
+function runSceneInit(parsed) {
   if (parsed.data.init !== undefined) {
-    parsed.data.init();
+    parsed.data.init()
   }
-  return parsed;
-};
+  return parsed
+}
 
 //
 // A `popstate` event is dispatched to the window every time the active history
@@ -379,13 +350,13 @@ runSceneInit = function (parsed) {
 //
 window.onpopstate = function () {
   if (!loaded) {
-    return init();
+    return init()
   }
 
   if (files !== undefined) {
-    runScene(document.location.hash);
+    runScene(document.location.hash)
   }
-};
+}
 
 //
 // ## Parsing location hash and running a scene
@@ -395,10 +366,10 @@ window.onpopstate = function () {
 // 1. parsing location's hash to get scene's name
 // 1. load and render selected scene
 //
-runScene = function (hash) {
-  var scene = parse(hash);
-  loadAndRender(scene);
-};
+function runScene(hash) {
+  var scene = parse(hash)
+  loadAndRender(scene)
+}
 
 //
 // A gist-txt location hash has the form:
@@ -419,48 +390,48 @@ runScene = function (hash) {
 // If the scene name is blank return 'index', the default name of the main
 // scene, otherwise return the scene name found.
 //
-parse = function (hash) {
-  var path = hash.slice(1);
-  var segments = path.split('/');
-  gistId = segments.shift();
-  var scene = segments.join('/');
+function parse(hash) {
+  var path = hash.slice(1)
+  var segments = path.split("/")
+  gistId = segments.shift()
+  var scene = segments.join("/")
 
-  if (scene === '') {
-    return 'index';
+  if (scene === "") {
+    return "index"
   }
 
-  return scene;
-};
+  return scene
+}
 
 //
 // `toggleError` and `toggleLoading` help showing error and loading messages.
 //
-toggleError = function (display, errorMessage) {
-  var element = document.querySelector('#error');
-  element.innerHTML = 'Error: ' + errorMessage;
+function toggleError(display, errorMessage) {
+  var element = document.querySelector("#error")
+  element.innerHTML = "Error: " + errorMessage
   if (display) {
-    element.style.display = 'block';
+    element.style.display = "block"
   } else {
-    element.style.display = 'none';
+    element.style.display = "none"
   }
-};
+}
 
-toggleLoading = function (display) {
-  var element = document.querySelector('#loading');
+function toggleLoading(display) {
+  var element = document.querySelector("#loading")
   if (display) {
-    element.style.display = 'block';
+    element.style.display = "block"
   } else {
-    element.style.display = 'none';
+    element.style.display = "none"
   }
-};
+}
 
 //
 // During development you can use the `DEV` special gist id to bypass requests
 // to the local development server to the `/dev` path.
 //
-isDev = function () {
-  return gistId === 'DEV';
-};
+function isDev() {
+  return gistId === "DEV"
+}
 
 
 //
@@ -469,9 +440,9 @@ isDev = function () {
 // On development environment `fileURL` will just return a relative path to the
 // file inside the `dev` directory.
 //
-fileURL = function (filename) {
-  return isDev() ? ('/dev/' + filename) : files[filename].raw_url;
-};
+function fileURL(filename) {
+  return isDev() ? ("/dev/" + filename) : files[filename].raw_url
+}
 
 //
 // Returns true if a file exists in the selected gist.
@@ -479,58 +450,58 @@ fileURL = function (filename) {
 // On development environment it will just return true to avoid needing an
 // index of all development files.
 //
-fileExists = function (filename) {
-  return isDev() || files[filename] !== undefined;
-};
+function fileExists(filename) {
+  return isDev() || files[filename] !== undefined
+}
 
 //
 // Returns a promise that resolves with a `file` object if the file exists and
 // rejects otherwise.
 //
-file = function (filename) {
+function file(filename) {
   if (fileExists(filename)) {
-    return Promise.resolve(files[filename]);
+    return Promise.resolve(files[filename])
   }
-  return Promise.reject('File not found');
-};
+  return Promise.reject("File not found")
+}
 
 //
 // Sends a HTTP GET request to url.
 //
-httpGet = function (url) {
+function httpGet(url) {
   return new Promise(function (resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url);
+    var xhr = new XMLHttpRequest()
+    xhr.open("GET", url)
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.responseText);
+        resolve(xhr.responseText)
       } else {
-        reject(xhr.statusText);
+        reject(xhr.statusText)
       }
-    };
-    xhr.send();
-  });
-};
+    }
+    xhr.send()
+  })
+}
 
 //
 // Extends object a with properties from object b, recursively.
 //
-extend = function (a, b) {
-  var key;
+function extend(a, b) {
+  var key
   for (key in b) {
     if (b.hasOwnProperty(key)) {
-      if (typeof a[key] === 'object' && typeof b[key] === 'object') {
-        extend(a[key], b[key]);
+      if (typeof a[key] === "object" && typeof b[key] === "object") {
+        extend(a[key], b[key])
       } else {
-        a[key] = b[key];
+        a[key] = b[key]
       }
     }
   }
-};
+}
 
 //
 // ## It's time to play
 //
 // Let's play by starting the engine at `document.ready` event.
 //
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener("DOMContentLoaded", init)
