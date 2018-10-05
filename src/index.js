@@ -122,9 +122,12 @@ function loadAndRender(scene) {
   toggleLoading(true)
 
   return getScene(scene)
-    .then(runSceneInit)
-    .then(playTrack)
-    .then(updateGameState)
+    .then(parsed => {
+      runSceneInit(parsed)
+      playTrack(parsed)
+      updateGameState(parsed)
+      return parsed.content
+    })
     .then(renderMustache)
     .then(renderMarkdown)
     .then(outputContent)
@@ -226,7 +229,6 @@ function playTrack(parsed) {
       playSceneTrack(parsed.data.track)
     }
   }
-  return parsed
 }
 
 //
@@ -273,7 +275,7 @@ function renderMarkdown(content) {
 function outputContent(content) {
   var contentElement = document.querySelector("#content")
   contentElement.innerHTML = content
-  return Promise.resolve(contentElement)
+  return contentElement
 }
 
 //
@@ -325,7 +327,6 @@ function handleInternalLinks(contentElement) {
 //
 function updateGameState(parsed) {
   extend(window.state, parsed.data.state)
-  return parsed.content
 }
 
 //
@@ -335,7 +336,6 @@ function runSceneInit(parsed) {
   if (parsed.data.init !== undefined) {
     parsed.data.init()
   }
-  return parsed
 }
 
 //
