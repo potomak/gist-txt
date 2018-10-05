@@ -121,17 +121,8 @@ function loadAndRender(scene) {
   toggleError(false)
   toggleLoading(true)
 
-  var promise
-  if (cache[scene] !== undefined) {
-    promise = Promise.resolve(runSceneInit(cache[scene]))
-  } else {
-    promise = getFileContent(scene + ".markdown")
-      .then(extractYFM.bind(this, scene))
-      .then(cacheContent.bind(this, scene))
-      .then(runSceneInit)
-  }
-
-  return promise
+  return getScene(scene)
+    .then(runSceneInit)
     .then(playTrack)
     .then(updateGameState)
     .then(renderMustache)
@@ -291,9 +282,17 @@ function outputContent(content) {
 // The cache consists of a simple JavaScript object that contains gist's files
 // parsed content indexed by scene name.
 //
-function cacheContent(scene, content) {
-  cache[scene] = content
-  return content
+function getScene(scene) {
+  if (cache[scene] !== undefined) {
+    return Promise.resolve(cache[scene])
+  }
+
+  return getFileContent(scene + ".markdown")
+    .then(extractYFM.bind(this, scene))
+    .then(parsed => {
+      cache[scene] = parsed
+      return parsed
+    })
 }
 
 //
