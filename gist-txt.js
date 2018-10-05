@@ -23,7 +23,6 @@ var VERSION = require('./package.json').version;
 var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
-var q = require('q');
 
 var initUI;
 var applyStylesheet;
@@ -48,6 +47,7 @@ var toggleLoading;
 var isDev;
 var fileURL;
 var fileExists;
+var file;
 var httpGet;
 var extend;
 
@@ -81,16 +81,13 @@ var init = function () {
   }
 
   return httpGet('https://api.github.com/gists/' + gistId)
-    .then(function (xhr) {
-      return JSON.parse(xhr.responseText);
-    })
+    .then(JSON.parse)
     .then(function (gist) {
       files = gist.files;
       return initUI(scene);
-    }, function (xhr) {
-      toggleLoading(false);
-      toggleError(true, xhr.statusText);
-    });
+    })
+    .catch(toggleError.bind(this, true))
+    .finally(toggleLoading.bind(this, false));
 };
 
 //
@@ -114,21 +111,19 @@ initUI = function (scene) {
 // optional).
 //
 applyStylesheet = function () {
-  var deferred = q.defer();
-  if (fileExists('style.css')) {
-    httpGet(fileURL('style.css'))
-      .then(function (xhr) {
-        appendStyle(xhr.responseText, {});
-      })
-      .fin(deferred.resolve);
-  } else {
-    deferred.resolve();
-  }
-  return deferred.promise;
+  return getFileContent('style.css').then(function (content) {
+    appendStyle(content, {});
+  }).catch();
 };
 
 //
 // ## Loading and rendering scenes
+//
+// Every scene is associated with a Markdown gist's file in the form:
+//
+//     scene + '.markdown'
+//
+// where `scene` is the name of the scene.
 //
 // The `cache` object is inspected to retrieve an already compiled scene file,
 // otherwise the *load and render* process include:
@@ -155,9 +150,10 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    promise = q.fcall(runSceneInit.bind(this, cache[scene]));
+    runSceneInit(cache[scene]);
+    promise = Promise.resolve();
   } else {
-    promise = getFileContent(scene)
+    promise = getFileContent(scene + '.markdown')
       .then(extractYFM.bind(this, scene))
       .then(cacheContent.bind(this, scene))
       .then(runSceneInit);
@@ -184,7 +180,7 @@ loadAndRender = function (scene) {
       currentScene = scene;
     })
     .catch(toggleError.bind(this, true))
-    .fin(toggleLoading.bind(this, false));
+    .finally(toggleLoading.bind(this, false));
 };
 
 //
@@ -203,33 +199,12 @@ compileAndDisplayFooter = function () {
 };
 
 //
-// Every scene is associated with a Markdown gist's file in the form:
+// Sends a GET request to file's `raw_url` if it's present in the `files` list.
 //
-//     scene + '.markdown'
-//
-// where `scene` is the name of the scene.
-//
-// A GET request to file's `raw_url` is made and if successful it resolves the
-// deferred object with the result content as argument of the callback.
-//
-getFileContent = function (scene) {
-  var deferred = q.defer();
-  var filename = scene + '.markdown';
-
-  if (!fileExists(filename)) {
-    deferred.reject(new Error('Scene not found'));
-    return deferred.promise;
-  }
-
-  httpGet(fileURL(filename))
-    .then(function (xhr) {
-      deferred.resolve(xhr.responseText);
-    })
-    .catch(function (xhr) {
-      throw new Error(xhr.statusText);
-    });
-
-  return deferred.promise;
+getFileContent = function (filename) {
+  return file(filename).then(function () {
+    return httpGet(fileURL(filename));
+  });
 };
 
 //
@@ -335,11 +310,9 @@ renderMarkdown = function (content) {
 // in the DOM.
 //
 outputContent = function (content) {
-  var deferred = q.defer();
   var contentElement = document.querySelector('#content');
   contentElement.innerHTML = content;
-  deferred.resolve(contentElement);
-  return deferred.promise;
+  return Promise.resolve(contentElement);
 };
 
 //
@@ -510,21 +483,32 @@ fileExists = function (filename) {
 };
 
 //
+// Returns a promise that resolves with a `file` object if the file exists and
+// rejects otherwise.
+//
+file = function (filename) {
+  if (fileExists(filename)) {
+    return Promise.resolve(files[filename]);
+  }
+  return Promise.reject('File not found');
+};
+
+//
 // Sends a HTTP GET request to url.
 //
 httpGet = function (url) {
-  var deferred = q.defer();
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', url);
-  xhr.onload = function () {
-    if (xhr.status >= 200 && xhr.status < 300) {
-      deferred.resolve(xhr);
-    } else {
-      deferred.reject(xhr);
-    }
-  };
-  xhr.send();
-  return deferred.promise;
+  return new Promise(function (resolve, reject) {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url);
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(xhr.responseText);
+      } else {
+        reject(xhr.statusText);
+      }
+    };
+    xhr.send();
+  });
 };
 
 //
