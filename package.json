@@ -1,6 +1,6 @@
 {
   "name": "gist-txt",
-  "version": "1.13.0",
+  "version": "1.14.0",
   "description": "A minimal text adventure engine",
   "main": "gist-txt.js",
   "scripts": {
