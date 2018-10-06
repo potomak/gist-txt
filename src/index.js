@@ -158,7 +158,7 @@ function compileAndDisplayFooter() {
   var source = document.querySelector("a#source")
   source.setAttribute("href", "https://gist.github.com/" + gistId)
   source.innerHTML = gistId
-  document.querySelector("footer").style.display = "block"
+  show(document.querySelector("footer"))
 }
 
 //
@@ -415,19 +415,27 @@ function parse(hash) {
 function toggleError(display, errorMessage) {
   var element = document.getElementById("error")
   element.innerHTML = "Error: " + errorMessage
-  if (display) {
-    element.style.display = "block"
-  } else {
-    element.style.display = "none"
-  }
+  toggle(element, display)
 }
 
 function toggleLoading(display) {
   var element = document.getElementById("loading")
+  toggle(element, display)
+}
+
+function show(element) {
+  element.style.display = "block"
+}
+
+function hide(element) {
+  element.style.display = "none"
+}
+
+function toggle(element, display) {
   if (display) {
-    element.style.display = "block"
+    show(element)
   } else {
-    element.style.display = "none"
+    hide(element)
   }
 }
 
