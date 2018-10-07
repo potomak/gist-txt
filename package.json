@@ -4,7 +4,7 @@
   "description": "A minimal text adventure engine",
   "browser": "dist/main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "doc": "docco src/index.js",
     "lint": "eslint src/index.js",
     "build": "webpack --mode production",
@@ -40,6 +40,7 @@
     "docco": "^0.7.0",
     "eslint": "^5.6.1",
     "http-server": "^0.8.5",
+    "jest": "^23.6.0",
     "webpack": "^4.20.2",
     "webpack-cli": "^3.1.2"
   },
