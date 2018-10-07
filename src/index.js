@@ -24,6 +24,7 @@ window.esprima = esprima
 import yaml from "js-yaml"
 import matter from "gray-matter"
 
+import httpGet from "./httpGet"
 import parse from "./parse"
 
 //
@@ -449,24 +450,6 @@ function file(filename) {
     return Promise.resolve(files[filename])
   }
   return Promise.reject("File not found")
-}
-
-//
-// Sends a HTTP GET request to url.
-//
-function httpGet(url) {
-  return new Promise((resolve, reject) => {
-    var xhr = new XMLHttpRequest()
-    xhr.open("GET", url)
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.responseText)
-      } else {
-        reject(xhr.statusText)
-      }
-    }
-    xhr.send()
-  })
 }
 
 //
