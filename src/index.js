@@ -90,7 +90,7 @@ function initUI(scene) {
 function applyStylesheet() {
   return getFileContent("style.css")
     .then(content => appendStyle(content, {}))
-    .catch()
+    .catch(() => true)
 }
 
 //
