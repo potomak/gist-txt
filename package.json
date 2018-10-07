@@ -44,6 +44,7 @@
     "webpack-cli": "^3.1.2"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.0.0",
     "esprima": "^4.0.1",
     "gray-matter": "^4.0.1",
     "js-yaml": "^3.12.0",
