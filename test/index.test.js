@@ -12,6 +12,9 @@ const resetEnv = () => {
     "<footer style=\"display: none\">" +
     "  Source: <a id=\"source\"></a>" +
     "</footer>"
+
+  // Reset document.location.hash
+  document.location.hash = ""
 }
 
 describe("init", () => {
