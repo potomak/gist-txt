@@ -42,8 +42,8 @@ describe("init", () => {
     const httpGet = require("../src/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
       }
       return Promise.resolve(gistContent)
     })
