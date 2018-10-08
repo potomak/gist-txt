@@ -112,3 +112,40 @@ describe("init", () => {
     })
   })
 })
+
+describe("scene transition", () => {
+  test("displays the scene content", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" },
+        "end.markdown": { raw_url: "http://gists/end.markdown" }
+      }
+    })
+    const indexContent = "Once upon a time... [continue...](end)"
+    const endContent = "The end"
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
+
+      // Dispatch scene transition
+      document.querySelector("a[href=end]").click()
+    }).then(() => {
+      return new Promise(process.nextTick)
+    }).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("The end")
+    })
+  })
+})
