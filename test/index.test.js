@@ -91,4 +91,36 @@ describe("init", () => {
       })
     })
   })
+
+  test("renders mustache tags", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" }
+      }
+    })
+    const indexContent =
+      "---\n" +
+      "state:\n" +
+      "  hero: Bob\n" +
+      "---\n\n" +
+      "Once upon a time {{hero}}..."
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(resolve => {
+      process.nextTick(() => {
+        expect(document.getElementById("content").innerHTML).toContain("<p>Once upon a time Bob...</p>")
+        resolve()
+      })
+    })
+  })
 })

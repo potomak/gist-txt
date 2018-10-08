@@ -49,6 +49,7 @@ import parse from "./parse"
 // scene.
 //
 function init() {
+  cache = {}
   loaded = true
   var [gId, scene] = parse(document.location.hash)
   gistId = gId
