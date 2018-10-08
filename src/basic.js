@@ -6,14 +6,6 @@ function hide(element) {
   element.style.display = "none"
 }
 
-function toggle(element, display) {
-  if (display) {
-    show(element)
-  } else {
-    hide(element)
-  }
-}
-
 function scrollTop() {
   document.body.scrollTop = 0
   document.documentElement.scrollTop = 0
@@ -55,7 +47,6 @@ function extend(a, b) {
 export default {
   show,
   hide,
-  toggle,
   scrollTop,
   appendStyle,
   extend
