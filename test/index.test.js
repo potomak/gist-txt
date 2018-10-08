@@ -90,6 +90,36 @@ describe("init", () => {
     })
   })
 
+  test("applies the scene stylesheet when the 'style' attribute is present", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" }
+      }
+    })
+    const styleContent = "body { background-color: black; }"
+    const indexContent =
+      "---\n" +
+      "style: '" + styleContent + "'\n" +
+      "---\n\n" +
+      "Once upon a time..."
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(process.nextTick).then(() => {
+      expect(document.querySelector("style").innerHTML).toContain(styleContent)
+      expect(document.querySelector("style").id).toEqual("index-style")
+    })
+  })
+
   test("renders mustache tags", () => {
     const gistContent = JSON.stringify({
       files: {
