@@ -24,6 +24,8 @@ window.esprima = esprima
 import yaml from "js-yaml"
 import matter from "gray-matter"
 
+import basic from "./basic"
+import components from "./components"
 import httpGet from "./httpGet"
 import parse from "./parse"
 
@@ -63,8 +65,11 @@ function init() {
       files = gist.files
       return initUI(scene)
     })
-    .catch(toggleError.bind(this, true))
-    .finally(toggleLoading.bind(this, false))
+    .catch(error => {
+      components.error().innerHTML = `Error: ${error}`
+      basic.show(components.error())
+    })
+    .finally(() => basic.hide(components.loading()))
 }
 
 //
@@ -89,7 +94,7 @@ function initUI(scene) {
 //
 function applyStylesheet() {
   return getFileContent("style.css")
-    .then(content => appendStyle(content, {}))
+    .then(content => basic.appendStyle(content, {}))
     .catch(() => true)
 }
 
@@ -122,8 +127,8 @@ function applyStylesheet() {
 // current scene's stylesheet is activated.
 //
 function loadAndRender(scene) {
-  toggleError(false)
-  toggleLoading(true)
+  basic.hide(components.error())
+  basic.show(components.loading())
 
   return getScene(scene)
     .then(parsed => {
@@ -136,7 +141,7 @@ function loadAndRender(scene) {
     .then(renderMarkdown)
     .then(outputContent)
     .then(handleInternalLinks)
-    .then(scrollTop)
+    .then(basic.scrollTop)
     .then(() => {
       var currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
       var sceneStyle = document.getElementById(sceneStyleId(scene))
@@ -148,8 +153,11 @@ function loadAndRender(scene) {
       }
       currentScene = scene
     })
-    .catch(toggleError.bind(this, true))
-    .finally(toggleLoading.bind(this, false))
+    .catch(error => {
+      components.error().innerHTML = `Error: ${error}`
+      basic.show(components.error())
+    })
+    .finally(() => basic.hide(components.loading()))
 }
 
 //
@@ -162,7 +170,7 @@ function compileAndDisplayFooter() {
   var source = document.querySelector("a#source")
   source.setAttribute("href", "https://gist.github.com/" + gistId)
   source.innerHTML = gistId
-  show(document.querySelector("footer"))
+  basic.show(components.footer())
 }
 
 //
@@ -184,7 +192,7 @@ function extractYFM(scene, content) {
     engines: { yaml: yaml.load.bind(yaml) }
   })
   if (parsed.data.style !== undefined) {
-    appendStyle(parsed.data.style, { id: sceneStyleId(scene) })
+    basic.appendStyle(parsed.data.style, { id: sceneStyleId(scene) })
   }
   return parsed
 }
@@ -196,23 +204,6 @@ function extractYFM(scene, content) {
 //
 function sceneStyleId(scene) {
   return scene + "-style"
-}
-
-//
-// Appends a `<style>` element with `content` in the DOM's `<head>`.
-//
-function appendStyle(content, attributes) {
-  var style = document.createElement("style")
-  var name
-  for (name in attributes) {
-    if (attributes.hasOwnProperty(name)) {
-      style.setAttribute(name, attributes[name])
-    }
-  }
-  style.setAttribute("type", "text/css")
-  style.innerHTML = content
-  var head = document.querySelector("head")
-  head.append(style)
 }
 
 //
@@ -277,13 +268,8 @@ function renderMarkdown(content) {
 // The HTML rendered content is the main content of the scene. It gets appended
 // to the `#content` element in the DOM.
 //
-// The returning promise fulfills after the `content` string has been inserted
-// in the DOM.
-//
 function outputContent(content) {
-  var contentElement = document.getElementById("content")
-  contentElement.innerHTML = content
-  return contentElement
+  components.content().innerHTML = content
 }
 
 //
@@ -319,8 +305,8 @@ function getScene(scene) {
 // At every internal link click event a new state get pushed in the
 // `window.history` object to allow navigation using back and forward buttons.
 //
-function handleInternalLinks(contentElement) {
-  contentElement.querySelectorAll("a").forEach(anchor => {
+function handleInternalLinks() {
+  components.content().querySelectorAll("a").forEach(anchor => {
     anchor.addEventListener("click", event => {
       event.preventDefault()
       var hash = "#" + gistId + "/" + anchor.getAttribute("href")
@@ -334,7 +320,7 @@ function handleInternalLinks(contentElement) {
 // Extends game state with current scene's state.
 //
 function updateGameState(parsed) {
-  extend(window.state, parsed.data.state)
+  basic.extend(window.state, parsed.data.state)
 }
 
 //
@@ -344,11 +330,6 @@ function runSceneInit(parsed) {
   if (parsed.data.init !== undefined) {
     parsed.data.init()
   }
-}
-
-function scrollTop() {
-  document.body.scrollTop = 0
-  document.documentElement.scrollTop = 0
 }
 
 //
@@ -383,43 +364,12 @@ function runScene(hash) {
 }
 
 //
-// `toggleError` and `toggleLoading` help showing error and loading messages.
-//
-function toggleError(display, errorMessage) {
-  var element = document.getElementById("error")
-  element.innerHTML = "Error: " + errorMessage
-  toggle(element, display)
-}
-
-function toggleLoading(display) {
-  var element = document.getElementById("loading")
-  toggle(element, display)
-}
-
-function show(element) {
-  element.style.display = "block"
-}
-
-function hide(element) {
-  element.style.display = "none"
-}
-
-function toggle(element, display) {
-  if (display) {
-    show(element)
-  } else {
-    hide(element)
-  }
-}
-
-//
 // During development you can use the `DEV` special gist id to bypass requests
 // to the local development server to the `/dev` path.
 //
 function isDev() {
   return gistId === "DEV"
 }
-
 
 //
 // Returns a file's URL based on current environment.
@@ -450,22 +400,6 @@ function file(filename) {
     return Promise.resolve(files[filename])
   }
   return Promise.reject("File not found")
-}
-
-//
-// Extends object a with properties from object b, recursively.
-//
-function extend(a, b) {
-  var key
-  for (key in b) {
-    if (b.hasOwnProperty(key)) {
-      if (typeof a[key] === "object" && typeof b[key] === "object") {
-        extend(a[key], b[key])
-      } else {
-        a[key] = b[key]
-      }
-    }
-  }
 }
 
 //
