@@ -60,4 +60,35 @@ describe("init", () => {
       })
     })
   })
+
+  test("applies the default stylesheet when style.css is present", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" },
+        "style.css": { raw_url: "http://gists/style.css" }
+      }
+    })
+    const indexContent = "Once upon a time..."
+    const styleContent = "body { background-color: black; }"
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/style.css":
+          return Promise.resolve(styleContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(resolve => {
+      process.nextTick(() => {
+        expect(document.getElementsByTagName("style")[0].innerHTML).toContain(styleContent)
+        resolve()
+      })
+    })
+  })
 })
