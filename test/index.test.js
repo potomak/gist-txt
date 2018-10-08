@@ -116,6 +116,8 @@ describe("init", () => {
 })
 
 describe("scene transition", () => {
+  beforeEach(resetEnv)
+
   test("displays the scene content", () => {
     const gistContent = JSON.stringify({
       files: {
