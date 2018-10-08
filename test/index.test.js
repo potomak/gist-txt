@@ -232,4 +232,62 @@ describe("scene transition", () => {
       expect(httpGet.default.mock.calls[httpGet.default.mock.calls.length - 1]).toEqual(["http://gists/end.markdown"])
     })
   })
+
+  test("enables and disables the correct scene styles", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" },
+        "end.markdown": { raw_url: "http://gists/end.markdown" }
+      }
+    })
+    const indexContent =
+      "---\n" +
+      "style: 'body { background-color: black; }'\n" +
+      "---\n\n" +
+      "Once upon a time... [continue...](end)"
+    const endContent =
+      "---\n" +
+      "style: 'body { background-color: green; }'\n" +
+      "---\n\n" +
+      "The end... [or not?](index)"
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
+      expect(document.getElementById("end-style")).toBeNull()
+      expect(document.getElementById("index-style").innerHTML).toContain("background-color: black")
+      expect(document.getElementById("index-style").disabled).toEqual(false)
+
+      // Dispatch scene transition
+      document.querySelector("a[href=end]").click()
+    }).then(() => {
+      return new Promise(process.nextTick)
+    }).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("The end")
+      expect(document.getElementById("end-style").innerHTML).toContain("background-color: green")
+      expect(document.getElementById("end-style").disabled).toEqual(false)
+      expect(document.getElementById("index-style").disabled).toEqual(true)
+
+      // Dispatch scene transition
+      document.querySelector("a[href=index]").click()
+    }).then(() => {
+      return new Promise(process.nextTick)
+    }).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
+      expect(document.getElementById("index-style").disabled).toEqual(false)
+      expect(document.getElementById("end-style").disabled).toEqual(true)
+    })
+  })
 })
