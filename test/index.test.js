@@ -3,17 +3,19 @@ jest.mock("../src/httpGet")
 // Register init to DOMContentLoaded event
 require("../src/index")
 
+const resetEnv = () => {
+  // Set up our document body
+  document.body.innerHTML =
+    "<div id=\"error\"></div>" +
+    "<div id=\"loading\">Loading...</div>" +
+    "<div id=\"content\"></div>" +
+    "<footer style=\"display: none\">" +
+    "  Source: <a id=\"source\"></a>" +
+    "</footer>"
+}
+
 describe("init", () => {
-  beforeEach(() => {
-    // Set up our document body
-    document.body.innerHTML =
-      "<div id=\"error\"></div>" +
-      "<div id=\"loading\">Loading...</div>" +
-      "<div id=\"content\"></div>" +
-      "<footer style=\"display: none\">" +
-      "  Source: <a id=\"source\"></a>" +
-      "</footer>"
-  })
+  beforeEach(resetEnv)
 
   test("displays an error if the gist request fails", () => {
     const httpGet = require("../src/httpGet")
