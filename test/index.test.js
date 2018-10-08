@@ -22,13 +22,10 @@ describe("init", () => {
     // Dispatch the DOMContentLoaded event
     document.dispatchEvent(new Event("DOMContentLoaded"))
 
-    return new Promise(resolve => {
-      process.nextTick(() => {
-        expect(document.getElementById("error").innerHTML).toEqual("Error: Test error")
-        expect(document.getElementById("error").style.display).toEqual("block")
-        expect(document.getElementById("loading").style.display).toEqual("none")
-        resolve()
-      })
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("error").innerHTML).toEqual("Error: Test error")
+      expect(document.getElementById("error").style.display).toEqual("block")
+      expect(document.getElementById("loading").style.display).toEqual("none")
     })
   })
 
@@ -51,13 +48,10 @@ describe("init", () => {
     // Dispatch the DOMContentLoaded event
     document.dispatchEvent(new Event("DOMContentLoaded"))
 
-    return new Promise(resolve => {
-      process.nextTick(() => {
-        expect(document.getElementById("error").style.display).toEqual("none")
-        expect(document.getElementById("loading").style.display).toEqual("none")
-        expect(document.getElementById("content").innerHTML).toContain("<p>Once upon a time...</p>")
-        resolve()
-      })
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("error").style.display).toEqual("none")
+      expect(document.getElementById("loading").style.display).toEqual("none")
+      expect(document.getElementById("content").innerHTML).toContain("<p>Once upon a time...</p>")
     })
   })
 
@@ -84,11 +78,8 @@ describe("init", () => {
     // Dispatch the DOMContentLoaded event
     document.dispatchEvent(new Event("DOMContentLoaded"))
 
-    return new Promise(resolve => {
-      process.nextTick(() => {
-        expect(document.getElementsByTagName("style")[0].innerHTML).toContain(styleContent)
-        resolve()
-      })
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementsByTagName("style")[0].innerHTML).toContain(styleContent)
     })
   })
 
@@ -116,11 +107,8 @@ describe("init", () => {
     // Dispatch the DOMContentLoaded event
     document.dispatchEvent(new Event("DOMContentLoaded"))
 
-    return new Promise(resolve => {
-      process.nextTick(() => {
-        expect(document.getElementById("content").innerHTML).toContain("<p>Once upon a time Bob...</p>")
-        resolve()
-      })
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("<p>Once upon a time Bob...</p>")
     })
   })
 })
