@@ -17,6 +17,9 @@ const resetEnv = () => {
 
   // Reset document.location.hash
   document.location.hash = ""
+
+  // Reset game state
+  window.state = {}
 }
 
 describe("init", () => {
@@ -288,6 +291,71 @@ describe("scene transition", () => {
       expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
       expect(document.getElementById("index-style").disabled).toEqual(false)
       expect(document.getElementById("end-style").disabled).toEqual(true)
+    })
+  })
+
+  test("updates the game state", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" },
+        "brave-knight.markdown": { raw_url: "http://gists/brave-knight.markdown" },
+        "evil-king.markdown": { raw_url: "http://gists/evil-king.markdown" },
+        "end.markdown": { raw_url: "http://gists/end.markdown" }
+      }
+    })
+    const indexContent = "Once upon a time [a brave knight](brave-knight) fought an [evil king](evil-king)..."
+    const knightContent =
+      "---\n" +
+      "state:\n" +
+      "  brave: true\n" +
+      "---\n\n" +
+      "You're so brave! [continue...](end)"
+    const kingContent =
+      "---\n" +
+      "state:\n" +
+      "  evil: true\n" +
+      "---\n\n" +
+      "You're so evil! [continue...](end)"
+    const endContent =
+      "{{#brave}}Everyone lived happily ever after.{{/brave}}\n" +
+      "{{#evil}}No one lived happily ever after.{{/evil}}"
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/brave-knight.markdown":
+          return Promise.resolve(knightContent)
+        case "http://gists/evil-king.markdown":
+          return Promise.resolve(kingContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("Once upon a time")
+      expect(window.state).toEqual({})
+
+      // Dispatch scene transition
+      document.querySelector("a[href=brave-knight]").click()
+    }).then(() => {
+      return new Promise(process.nextTick)
+    }).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("You're so brave!")
+      expect(window.state).toEqual({ brave: true })
+
+      // Dispatch scene transition
+      document.querySelector("a[href=end]").click()
+    }).then(() => {
+      return new Promise(process.nextTick)
+    }).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("Everyone lived happily ever after")
+      expect(document.getElementById("content").innerHTML).not.toContain("No one lived happily ever after")
     })
   })
 })
