@@ -4,6 +4,8 @@ jest.mock("../src/httpGet")
 require("../src/index")
 
 const resetEnv = () => {
+  // Set up our document head
+  document.head.innerHTML = ""
   // Set up our document body
   document.body.innerHTML =
     "<div id=\"error\"></div>" +
