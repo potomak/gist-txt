@@ -59,7 +59,7 @@ function init() {
     return
   }
 
-  return httpGet("https://api.github.com/gists/" + gistId)
+  return httpGet(`https://api.github.com/gists/${gistId}`)
     .then(JSON.parse)
     .then(gist => {
       files = gist.files
@@ -103,7 +103,7 @@ function applyStylesheet() {
 //
 // Every scene is associated with a Markdown gist's file in the form:
 //
-//     scene + '.markdown'
+//     `${scene}.markdown`
 //
 // where `scene` is the name of the scene.
 //
@@ -168,7 +168,7 @@ function loadAndRender(scene) {
 //
 function compileAndDisplayFooter() {
   var source = document.querySelector("a#source")
-  source.setAttribute("href", "https://gist.github.com/" + gistId)
+  source.setAttribute("href", `https://gist.github.com/${gistId}`)
   source.innerHTML = gistId
   basic.show(components.footer())
 }
@@ -200,10 +200,10 @@ function extractYFM(scene, content) {
 //
 // Scene's stylesheet `<style>` element has an `id` with the form:
 //
-//     scene + '-style'
+//     `${scene}-style`
 //
 function sceneStyleId(scene) {
-  return scene + "-style"
+  return `${scene}-style`
 }
 
 //
@@ -238,7 +238,7 @@ function playTrack(parsed) {
 function playSceneTrack(track) {
   // TODO: check audio support during initialization
   var ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
-  var filename = track + "." + ext
+  var filename = `${track}.${ext}`
 
   if (fileExists(filename)) {
     var audio = new Audio()
@@ -283,7 +283,7 @@ function getScene(scene) {
     return Promise.resolve(cache[scene])
   }
 
-  return getFileContent(scene + ".markdown")
+  return getFileContent(`${scene}.markdown`)
     .then(extractYFM.bind(this, scene))
     .then(parsed => {
       cache[scene] = parsed
@@ -300,7 +300,7 @@ function getScene(scene) {
 // `<a>` elements' `href` attribute is used to rewrite location's hash in the
 // form:
 //
-//     '#' + gistId + '/' + href
+//     `#${gistId}/${href}`
 //
 // At every internal link click event a new state get pushed in the
 // `window.history` object to allow navigation using back and forward buttons.
@@ -309,7 +309,7 @@ function handleInternalLinks() {
   components.content().querySelectorAll("a").forEach(anchor => {
     anchor.addEventListener("click", event => {
       event.preventDefault()
-      var hash = "#" + gistId + "/" + anchor.getAttribute("href")
+      var hash = `#${gistId}/${anchor.getAttribute("href")}`
       runScene(hash)
       window.history.pushState(null, null, document.location.pathname + hash)
     })
@@ -378,7 +378,7 @@ function isDev() {
 // file inside the `dev` directory.
 //
 function fileURL(filename) {
-  return isDev() ? ("/dev/" + filename) : files[filename].raw_url
+  return isDev() ? `/dev/${filename}` : files[filename].raw_url
 }
 
 //
