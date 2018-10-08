@@ -1,5 +1,8 @@
 jest.mock("../src/httpGet")
 
+// Register init to DOMContentLoaded event
+require("../src/index")
+
 describe("init", () => {
   beforeEach(() => {
     // Set up our document body
@@ -10,9 +13,6 @@ describe("init", () => {
       "<footer style=\"display: none\">" +
       "  Source: <a id=\"source\"></a>" +
       "</footer>"
-
-    // Register init to DOMContentLoaded event
-    require("../src/index")
   })
 
   test("displays an error if the gist request fails", () => {
