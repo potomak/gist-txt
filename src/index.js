@@ -147,10 +147,10 @@ function loadAndRender(scene) {
       var currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
       var sceneStyle = document.getElementById(sceneStyleId(scene))
       if (currentSceneStyle) {
-        currentSceneStyle.disabled = true
+        basic.disable(currentSceneStyle)
       }
       if (sceneStyle) {
-        sceneStyle.disabled = false
+        basic.enable(sceneStyle)
       }
       currentScene = scene
     })

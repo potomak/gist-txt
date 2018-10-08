@@ -6,6 +6,14 @@ function hide(element) {
   element.style.display = "none"
 }
 
+function enable(element) {
+  element.disabled = false
+}
+
+function disable(element) {
+  element.disabled = true
+}
+
 function scrollTop() {
   document.body.scrollTop = 0
   document.documentElement.scrollTop = 0
@@ -47,6 +55,8 @@ function extend(a, b) {
 export default {
   show,
   hide,
+  enable,
+  disable,
   scrollTop,
   appendStyle,
   extend
