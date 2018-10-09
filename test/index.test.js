@@ -184,9 +184,7 @@ describe("scene transition", () => {
 
       // Dispatch scene transition
       document.querySelector("a[href=end]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("The end")
     })
   })
@@ -220,17 +218,13 @@ describe("scene transition", () => {
 
       // Dispatch scene transition
       document.querySelector("a[href=end]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("The end")
       expect(httpGet.default.mock.calls[httpGet.default.mock.calls.length - 1]).toEqual(["http://gists/end.markdown"])
 
       // Dispatch scene transition
       document.querySelector("a[href=index]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
       expect(httpGet.default.mock.calls[httpGet.default.mock.calls.length - 1]).toEqual(["http://gists/end.markdown"])
     })
@@ -275,9 +269,7 @@ describe("scene transition", () => {
 
       // Dispatch scene transition
       document.querySelector("a[href=end]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("The end")
       expect(document.getElementById("end-style").innerHTML).toContain("background-color: green")
       expect(document.getElementById("end-style").disabled).toEqual(false)
@@ -285,9 +277,7 @@ describe("scene transition", () => {
 
       // Dispatch scene transition
       document.querySelector("a[href=index]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
       expect(document.getElementById("index-style").disabled).toEqual(false)
       expect(document.getElementById("end-style").disabled).toEqual(true)
@@ -343,17 +333,13 @@ describe("scene transition", () => {
 
       // Dispatch scene transition
       document.querySelector("a[href=brave-knight]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("You're so brave!")
       expect(window.state).toEqual({ brave: true })
 
       // Dispatch scene transition
       document.querySelector("a[href=end]").click()
-    }).then(() => {
-      return new Promise(process.nextTick)
-    }).then(() => {
+    }).then(() => new Promise(process.nextTick)).then(() => {
       expect(document.getElementById("content").innerHTML).toContain("Everyone lived happily ever after")
       expect(document.getElementById("content").innerHTML).not.toContain("No one lived happily ever after")
     })
