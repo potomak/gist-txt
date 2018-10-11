@@ -20,7 +20,6 @@ var loaded = false;
 window.state = {};
 
 var VERSION = require('./package.json').version;
-var $ = require('jquery');
 var mustache = require('mustache');
 var marked = require('marked');
 var yfm = require('yfm');
@@ -32,7 +31,7 @@ var loadAndRender;
 var compileAndDisplayFooter;
 var getFileContent;
 var extractYFM;
-var injectSceneStyle;
+var appendStyle;
 var cacheContent;
 var renderMustache;
 var renderMarkdown;
@@ -47,6 +46,10 @@ var parse;
 var toggleError;
 var toggleLoading;
 var isDev;
+var fileURL;
+var fileExists;
+var httpGet;
+var extend;
 
 //
 // ## Initialization
@@ -77,7 +80,10 @@ var init = function () {
     return;
   }
 
-  return q($.getJSON('https://api.github.com/gists/' + gistId))
+  return httpGet('https://api.github.com/gists/' + gistId)
+    .then(function (xhr) {
+      return JSON.parse(xhr.responseText);
+    })
     .then(function (gist) {
       files = gist.files;
       return initUI(scene);
@@ -109,13 +115,10 @@ initUI = function (scene) {
 //
 applyStylesheet = function () {
   var deferred = q.defer();
-  if (files['style.css'] !== undefined) {
-    q($.get(files['style.css'].raw_url))
-      .then(function (content) {
-        $('<style>')
-          .attr('type', 'text/css')
-          .html(content)
-          .appendTo('head');
+  if (fileExists('style.css')) {
+    httpGet(fileURL('style.css'))
+      .then(function (xhr) {
+        appendStyle(xhr.responseText, {});
       })
       .fin(deferred.resolve);
   } else {
@@ -168,9 +171,16 @@ loadAndRender = function (scene) {
     .then(outputContent)
     .then(handleInternalLinks)
     .then(function () {
-      $('body').scrollTop(0);
-      $('#' + currentScene + '-style').prop('disabled', true);
-      $('#' + scene + '-style').prop('disabled', false);
+      document.body.scrollTop = 0;
+      document.documentElement.scrollTop = 0;
+      var currentSceneStyle = document.querySelector('#' + currentScene + '-style');
+      var sceneStyle = document.querySelector('#' + scene + '-style');
+      if (currentSceneStyle) {
+        currentSceneStyle.disabled = true;
+      }
+      if (sceneStyle) {
+        sceneStyle.disabled = false;
+      }
       currentScene = scene;
     })
     .catch(toggleError.bind(this, true))
@@ -185,11 +195,11 @@ loadAndRender = function (scene) {
 // * current version of the engine
 //
 compileAndDisplayFooter = function () {
-  $('a#source')
-    .attr('href', 'https://gist.github.com/' + gistId)
-    .html(gistId);
-  $('span#version').html(VERSION);
-  $('footer').show();
+  var source = document.querySelector('a#source');
+  source.setAttribute('href', 'https://gist.github.com/' + gistId);
+  source.innerHTML = gistId;
+  document.querySelector('span#version').innerHTML = VERSION;
+  document.querySelector('footer').style.display = 'block';
 };
 
 //
@@ -204,24 +214,17 @@ compileAndDisplayFooter = function () {
 //
 getFileContent = function (scene) {
   var deferred = q.defer();
-  var fileName = scene + '.markdown';
-  var file = files[fileName];
+  var filename = scene + '.markdown';
 
-  if (!isDev() && file === undefined) {
+  if (!fileExists(filename)) {
     deferred.reject(new Error('Scene not found'));
     return deferred.promise;
   }
 
-  var fileURL;
-
-  if (isDev()) {
-    fileURL = '/dev/' + fileName;
-  } else {
-    fileURL = file.raw_url;
-  }
-
-  q($.get(fileURL))
-    .then(deferred.resolve)
+  httpGet(fileURL(filename))
+    .then(function (xhr) {
+      deferred.resolve(xhr.responseText);
+    })
     .catch(function (xhr) {
       throw new Error(xhr.statusText);
     });
@@ -236,31 +239,33 @@ getFileContent = function (scene) {
 // If context's `style` property is defined a `<style>` tag with the content of
 // the property is injected to override global stylesheet rules.
 //
+// Scene's stylesheet `<style>` element has an `id` with the form:
+//
+//     scene + '-style'
+//
 extractYFM = function (scene, content) {
   var parsed = yfm(content);
   if (parsed.context.style !== undefined) {
-    injectSceneStyle(scene, parsed.context.style);
+    appendStyle(parsed.context.style, { id: scene + '-style' });
   }
   return parsed;
 };
 
 //
-// To inject a scene's stylesheet a `<style>` element with the id attribute in
-// the form:
+// Appends a `<style>` element with `content` in the DOM's `<head>`.
 //
-//     scene + '-style'
-//
-// get appended into the `<head>` of the HTML document.
-//
-// Scene stylesheets are disabled on scene transitions and re-enabled on new
-// visits of the scene.
-//
-injectSceneStyle = function (scene, content) {
-  $('<style>')
-    .attr('id', scene + '-style')
-    .attr('type', 'text/css')
-    .html(content)
-    .appendTo('head');
+appendStyle = function (content, attributes) {
+  var style = document.createElement('style');
+  var name;
+  for (name in attributes) {
+    if (attributes.hasOwnProperty(name)) {
+      style.setAttribute(name, attributes[name]);
+    }
+  }
+  style.setAttribute('type', 'text/css');
+  style.innerHTML = content;
+  var head = document.querySelector('head');
+  head.append(style);
 };
 
 //
@@ -268,6 +273,8 @@ injectSceneStyle = function (scene, content) {
 //
 // If there's a track already playing it fades its volume and start playing the
 // current one.
+//
+// TODO: fade between tracks without (previously done using $.animate)
 //
 // Audio files should be included in two formats: ogg and mp3.
 //
@@ -278,7 +285,7 @@ injectSceneStyle = function (scene, content) {
 playTrack = function (parsed) {
   if (parsed.context.track !== undefined) {
     if (currentTrack !== undefined && !currentTrack.paused) {
-      $(currentTrack).animate({ volume: 0 }, 1000, playSceneTrack.bind(this, parsed.context.track));
+      currentTrack.pause();
     } else {
       playSceneTrack(parsed.context.track);
     }
@@ -292,13 +299,17 @@ playTrack = function (parsed) {
 // browser audio capabilities.
 //
 playSceneTrack = function (track) {
+  // TODO: check audio support during initialization
   var ext = (new Audio().canPlayType('audio/ogg; codecs=vorbis')) ? 'ogg' : 'mp3';
   var filename = track + '.' + ext;
-  var track = new Audio();
-  track.autoplay = true;
-  track.loop = true;
-  track.src = files[filename].raw_url;
-  currentTrack = track;
+
+  if (fileExists(filename)) {
+    var audio = new Audio();
+    audio.autoplay = true;
+    audio.loop = true;
+    audio.src = fileURL(filename);
+    currentTrack = audio;
+  }
 };
 
 //
@@ -324,7 +335,11 @@ renderMarkdown = function (content) {
 // in the DOM.
 //
 outputContent = function (content) {
-  return q($('#content').html(content).promise());
+  var deferred = q.defer();
+  var contentElement = document.querySelector('#content');
+  contentElement.innerHTML = content;
+  deferred.resolve(contentElement);
+  return deferred.promise;
 };
 
 //
@@ -353,11 +368,13 @@ cacheContent = function (scene, content) {
 // `window.history` object to allow navigation using back and forward buttons.
 //
 handleInternalLinks = function (contentElement) {
-  contentElement.find('a').click(function (event) {
-    event.preventDefault();
-    var hash = '#' + gistId + '/' + $(this).attr('href');
-    runScene(hash);
-    window.history.pushState(null, null, document.location.pathname + hash);
+  contentElement.querySelectorAll('a').forEach(function (anchor) {
+    anchor.addEventListener('click', function (event) {
+      event.preventDefault();
+      var hash = '#' + gistId + '/' + anchor.getAttribute('href');
+      runScene(hash);
+      window.history.pushState(null, null, document.location.pathname + hash);
+    });
   });
 };
 
@@ -365,7 +382,7 @@ handleInternalLinks = function (contentElement) {
 // Extends game state with current scene's state.
 //
 updateGameState = function (parsed) {
-  $.extend(window.state, parsed.context.state);
+  extend(window.state, parsed.context.state);
   return parsed.content;
 };
 
@@ -445,11 +462,22 @@ parse = function (hash) {
 // `toggleError` and `toggleLoading` help showing error and loading messages.
 //
 toggleError = function (display, errorMessage) {
-  $('#error').html('Error: ' + errorMessage).toggle(display);
+  var element = document.querySelector('#error');
+  element.innerHTML = 'Error: ' + errorMessage;
+  if (display) {
+    element.style.display = 'block';
+  } else {
+    element.style.display = 'none';
+  }
 };
 
 toggleLoading = function (display) {
-  $('#loading').toggle(display);
+  var element = document.querySelector('#loading');
+  if (display) {
+    element.style.display = 'block';
+  } else {
+    element.style.display = 'none';
+  }
 };
 
 //
@@ -460,9 +488,64 @@ isDev = function () {
   return gistId === 'DEV';
 };
 
+
+//
+// Returns a file's URL based on current environment.
+//
+// On development environment `fileURL` will just return a relative path to the
+// file inside the `dev` directory.
+//
+fileURL = function (filename) {
+  return isDev() ? ('/dev/' + filename) : files[filename].raw_url;
+};
+
+//
+// Returns true if a file exists in the selected gist.
+//
+// On development environment it will just return true to avoid needing an
+// index of all development files.
+//
+fileExists = function (filename) {
+  return isDev() || files[filename] !== undefined;
+};
+
+//
+// Sends a HTTP GET request to url.
+//
+httpGet = function (url) {
+  var deferred = q.defer();
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', url);
+  xhr.onload = function () {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      deferred.resolve(xhr);
+    } else {
+      deferred.reject(xhr);
+    }
+  };
+  xhr.send();
+  return deferred.promise;
+};
+
+//
+// Extends object a with properties from object b, recursively.
+//
+extend = function (a, b) {
+  var key;
+  for (key in b) {
+    if (b.hasOwnProperty(key)) {
+      if (typeof a[key] === 'object' && typeof b[key] === 'object') {
+        extend(a[key], b[key]);
+      } else {
+        a[key] = b[key];
+      }
+    }
+  }
+};
+
 //
 // ## It's time to play
 //
 // Let's play by starting the engine at `document.ready` event.
 //
-$(init);
+document.addEventListener('DOMContentLoaded', init);
