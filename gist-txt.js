@@ -22,7 +22,10 @@ window.state = {};
 var VERSION = require('./package.json').version;
 var mustache = require('mustache');
 var marked = require('marked');
-var yfm = require('yfm');
+var esprima = require('esprima');
+window.esprima = esprima;
+var yaml = require('js-yaml');
+var matter = require('gray-matter');
 
 var initUI;
 var applyStylesheet;
@@ -150,8 +153,7 @@ loadAndRender = function (scene) {
 
   var promise;
   if (cache[scene] !== undefined) {
-    runSceneInit(cache[scene]);
-    promise = Promise.resolve();
+    promise = Promise.resolve(runSceneInit(cache[scene]));
   } else {
     promise = getFileContent(scene + '.markdown')
       .then(extractYFM.bind(this, scene))
@@ -209,9 +211,9 @@ getFileContent = function (filename) {
 
 //
 // The YAML Front Matter is extracted from the original content. The resulting
-// context is used to extend the global `state`.
+// data is used to extend the global `state`.
 //
-// If context's `style` property is defined a `<style>` tag with the content of
+// If data's `style` property is defined, a `<style>` tag with the content of
 // the property is injected to override global stylesheet rules.
 //
 // Scene's stylesheet `<style>` element has an `id` with the form:
@@ -219,9 +221,11 @@ getFileContent = function (filename) {
 //     scene + '-style'
 //
 extractYFM = function (scene, content) {
-  var parsed = yfm(content);
-  if (parsed.context.style !== undefined) {
-    appendStyle(parsed.context.style, { id: scene + '-style' });
+  var parsed = matter(content, {
+    engines: { yaml: yaml.load.bind(yaml) }
+  });
+  if (parsed.data.style !== undefined) {
+    appendStyle(parsed.data.style, { id: scene + '-style' });
   }
   return parsed;
 };
@@ -258,11 +262,11 @@ appendStyle = function (content, attributes) {
 // extension.
 //
 playTrack = function (parsed) {
-  if (parsed.context.track !== undefined) {
+  if (parsed.data.track !== undefined) {
     if (currentTrack !== undefined && !currentTrack.paused) {
       currentTrack.pause();
     } else {
-      playSceneTrack(parsed.context.track);
+      playSceneTrack(parsed.data.track);
     }
   }
   return parsed;
@@ -355,7 +359,7 @@ handleInternalLinks = function (contentElement) {
 // Extends game state with current scene's state.
 //
 updateGameState = function (parsed) {
-  extend(window.state, parsed.context.state);
+  extend(window.state, parsed.data.state);
   return parsed.content;
 };
 
@@ -363,8 +367,8 @@ updateGameState = function (parsed) {
 // Run a scene initialization function.
 //
 runSceneInit = function (parsed) {
-  if (parsed.context.init !== undefined) {
-    parsed.context.init();
+  if (parsed.data.init !== undefined) {
+    parsed.data.init();
   }
   return parsed;
 };

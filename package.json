@@ -1,6 +1,6 @@
 {
   "name": "gist-txt",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "A minimal text adventure engine",
   "main": "gist-txt.js",
   "scripts": {
@@ -42,8 +42,10 @@
     "watchify": "^2.4.0"
   },
   "dependencies": {
+    "esprima": "^4.0.1",
+    "gray-matter": "^4.0.1",
+    "js-yaml": "^3.12.0",
     "marked": "^0.3.3",
-    "mustache": "^1.1.0",
-    "yfm": "^0.2.0"
+    "mustache": "^1.1.0"
   }
 }
