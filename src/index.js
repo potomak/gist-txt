@@ -24,6 +24,9 @@ window.esprima = esprima
 import yaml from "js-yaml"
 import matter from "gray-matter"
 
+import httpGet from "./httpGet"
+import parse from "./parse"
+
 //
 // ## Initialization
 //
@@ -45,7 +48,8 @@ import matter from "gray-matter"
 //
 function init() {
   loaded = true
-  var scene = parse(document.location.hash)
+  var [gId, scene] = parse(document.location.hash)
+  gistId = gId
 
   if (isDev()) {
     files = {}
@@ -86,7 +90,7 @@ function initUI(scene) {
 function applyStylesheet() {
   return getFileContent("style.css")
     .then(content => appendStyle(content, {}))
-    .catch()
+    .catch(() => true)
 }
 
 //
@@ -373,40 +377,9 @@ window.onpopstate = () => {
 // 1. load and render selected scene
 //
 function runScene(hash) {
-  var scene = parse(hash)
+  var [gId, scene] = parse(hash)
+  gistId = gId
   loadAndRender(scene)
-}
-
-//
-// A gist-txt location hash has the form:
-//
-//     #<gist-id>/<scene>
-//
-// To parse the hash:
-//
-// 1. remove the '#' refix
-// 1. split the remaining string by '/'
-// 1. assign the first *segment* to the global variable `gistId`
-// 1. join the remaining segments with '/'
-//
-// Note: gists' files can't include the '/' character in the name so, even if
-// the remaining portion of the segments array is joined by '/', that array
-// should always contain at most one element.
-//
-// If the scene name is blank return 'index', the default name of the main
-// scene, otherwise return the scene name found.
-//
-function parse(hash) {
-  var path = hash.slice(1)
-  var segments = path.split("/")
-  gistId = segments.shift()
-  var scene = segments.join("/")
-
-  if (scene === "") {
-    return "index"
-  }
-
-  return scene
 }
 
 //
@@ -477,24 +450,6 @@ function file(filename) {
     return Promise.resolve(files[filename])
   }
   return Promise.reject("File not found")
-}
-
-//
-// Sends a HTTP GET request to url.
-//
-function httpGet(url) {
-  return new Promise((resolve, reject) => {
-    var xhr = new XMLHttpRequest()
-    xhr.open("GET", url)
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        resolve(xhr.responseText)
-      } else {
-        reject(xhr.statusText)
-      }
-    }
-    xhr.send()
-  })
 }
 
 //
