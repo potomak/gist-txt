@@ -6,12 +6,12 @@ function hide(element) {
   element.style.display = "none"
 }
 
-function toggle(element, display) {
-  if (display) {
-    show(element)
-  } else {
-    hide(element)
-  }
+function enable(element) {
+  element.disabled = false
+}
+
+function disable(element) {
+  element.disabled = true
 }
 
 function scrollTop() {
@@ -55,7 +55,8 @@ function extend(a, b) {
 export default {
   show,
   hide,
-  toggle,
+  enable,
+  disable,
   scrollTop,
   appendStyle,
   extend
