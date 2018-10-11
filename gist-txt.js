@@ -47,6 +47,8 @@ var parse;
 var toggleError;
 var toggleLoading;
 var isDev;
+var fileURL;
+var fileExists;
 
 //
 // ## Initialization
@@ -109,8 +111,8 @@ initUI = function (scene) {
 //
 applyStylesheet = function () {
   var deferred = q.defer();
-  if (files['style.css'] !== undefined) {
-    q($.get(files['style.css'].raw_url))
+  if (fileExists('style.css')) {
+    q($.get(fileURL('style.css')))
       .then(function (content) {
         $('<style>')
           .attr('type', 'text/css')
@@ -204,23 +206,14 @@ compileAndDisplayFooter = function () {
 //
 getFileContent = function (scene) {
   var deferred = q.defer();
-  var fileName = scene + '.markdown';
-  var file = files[fileName];
+  var filename = scene + '.markdown';
 
-  if (!isDev() && file === undefined) {
+  if (!fileExists(filename)) {
     deferred.reject(new Error('Scene not found'));
     return deferred.promise;
   }
 
-  var fileURL;
-
-  if (isDev()) {
-    fileURL = '/dev/' + fileName;
-  } else {
-    fileURL = file.raw_url;
-  }
-
-  q($.get(fileURL))
+  q($.get(fileURL(filename)))
     .then(deferred.resolve)
     .catch(function (xhr) {
       throw new Error(xhr.statusText);
@@ -292,13 +285,17 @@ playTrack = function (parsed) {
 // browser audio capabilities.
 //
 playSceneTrack = function (track) {
+  // TODO: check audio support during initialization
   var ext = (new Audio().canPlayType('audio/ogg; codecs=vorbis')) ? 'ogg' : 'mp3';
   var filename = track + '.' + ext;
-  var track = new Audio();
-  track.autoplay = true;
-  track.loop = true;
-  track.src = files[filename].raw_url;
-  currentTrack = track;
+
+  if (fileExists(filename)) {
+    var audio = new Audio();
+    audio.autoplay = true;
+    audio.loop = true;
+    audio.src = fileURL(filename);
+    currentTrack = audio;
+  }
 };
 
 //
@@ -458,6 +455,27 @@ toggleLoading = function (display) {
 //
 isDev = function () {
   return gistId === 'DEV';
+};
+
+
+//
+// Returns a file's URL based on current environment.
+//
+// On development environment `fileURL` will just return a relative path to the
+// file inside the `dev` directory.
+//
+fileURL = function (filename) {
+  return isDev() ? ('/dev/' + filename) : files[filename].raw_url;
+};
+
+//
+// Returns true if a file exists in the selected gist.
+//
+// On development environment it will just return true to avoid needing an
+// index of all development files.
+//
+fileExists = function (filename) {
+  return isDev() || files[filename] !== undefined;
 };
 
 //
