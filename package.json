@@ -1,15 +1,15 @@
 {
   "name": "gist-txt",
-  "version": "1.14.0",
+  "version": "2.0.0",
   "description": "A minimal text adventure engine",
-  "main": "gist-txt.js",
+  "browser": "dist/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "doc": "docco gist-txt.js",
-    "lint": "jslint gist-txt.js",
-    "build": "browserify gist-txt.js | uglifyjs > bundle.js",
-    "watch": "watchify gist-txt.js -o bundle.js --debug --verbose",
-    "serve": "http-server"
+    "doc": "docco src/index.js",
+    "lint": "eslint src/index.js",
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch --info-verbosity verbose",
+    "serve": "http-server dist"
   },
   "repository": {
     "type": "git",
@@ -34,12 +34,14 @@
   },
   "homepage": "https://github.com/potomak/gist-txt",
   "devDependencies": {
-    "browserify": "^9.0.3",
+    "@babel/core": "^7.1.2",
+    "@babel/preset-env": "^7.1.0",
+    "babel-loader": "^8.0.4",
     "docco": "^0.7.0",
+    "eslint": "^5.6.1",
     "http-server": "^0.8.5",
-    "jslint": "^0.8.1",
-    "uglify-js": "^2.4.16",
-    "watchify": "^2.4.0"
+    "webpack": "^4.20.2",
+    "webpack-cli": "^3.1.2"
   },
   "dependencies": {
     "esprima": "^4.0.1",

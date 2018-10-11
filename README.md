@@ -143,5 +143,5 @@ and open http://localhost:8080.
 ## Story development environment
 
 If you want to develop your text adventure locally, you can use the special
-`DEV` gist id to tell the tool to search for project files inside the `/dev`
-directory instead of making external HTTP requests.
+`DEV` gist id to tell the tool to search for project files inside the
+`/dist/dev` directory instead of making external HTTP requests.
