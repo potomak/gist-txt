@@ -2,6 +2,8 @@
 
 A minimal text adventure engine.
 
+[![Build Status](https://travis-ci.org/potomak/gist-txt.svg?branch=master)](https://travis-ci.org/potomak/gist-txt)
+
 This project has been inspired by [Twine](http://twinery.org/) and
 [bl.ocks.org](http://bl.ocks.org/).
 
