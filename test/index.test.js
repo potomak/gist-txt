@@ -152,13 +152,16 @@ describe("init", () => {
     })
   })
 
-  test("doesn't prevent default behavior of external links", () => {
+  test("doesn't prevent default behavior of external and absolute links", () => {
     const gistContent = JSON.stringify({
       files: {
         "index.markdown": { raw_url: "http://gists/index.markdown" }
       }
     })
-    const indexContent = "Once upon a time... [external link](http://example.com)"
+    const indexContent =
+      "Once upon a time... " +
+      "[external link](http://example.com) " +
+      "[absolute link](/path)"
     const httpGet = require("../src/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
@@ -179,6 +182,10 @@ describe("init", () => {
       document.querySelector("a[href='http://example.com']").click()
       // Note: document.location.href doesn't change when a link is clicked, but
       // it changes when a click listener has been added to the anchor
+      expect(document.location.href).toEqual(originalHref)
+
+      // Follow absolute link
+      document.querySelector("a[href='/path']").click()
       expect(document.location.href).toEqual(originalHref)
     })
   })

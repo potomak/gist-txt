@@ -308,13 +308,14 @@ function getScene(scene) {
 //
 function handleInternalLinks() {
   components.content().querySelectorAll("a").forEach(anchor => {
-    if (isExternal(anchor.getAttribute("href"))) {
+    const href = anchor.getAttribute("href")
+    if (isExternal(href) || isAbsolute(href)) {
       return
     }
 
     anchor.addEventListener("click", event => {
       event.preventDefault()
-      var hash = `#${gistId}/${anchor.getAttribute("href")}`
+      var hash = `#${gistId}/${href}`
       runScene(hash)
       window.history.pushState(null, null, document.location.pathname + hash)
     })
@@ -323,6 +324,10 @@ function handleInternalLinks() {
 
 function isExternal(href) {
   return href.indexOf("://") > -1
+}
+
+function isAbsolute(href) {
+  return href.startsWith("/")
 }
 
 //
