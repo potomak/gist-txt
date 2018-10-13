@@ -15,3 +15,5 @@ To add your text adventure to the list, update this page at
   [Luca De Rosso](http://twitter.com/lucaderosso),
   [Francesco Fraioli](http://twitter.com/pinakes),
   [Daniel Greenfeld](http://twitter.com/campoverdi)
+* [How to make games with gist-txt](http://potomak.github.io/gist-txt/#737a452d6f38c2b87403)
+  by [Giovanni Cappellotto](http://twitter.com/johnnyaboh)
