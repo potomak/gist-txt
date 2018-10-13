@@ -308,6 +308,10 @@ function getScene(scene) {
 //
 function handleInternalLinks() {
   components.content().querySelectorAll("a").forEach(anchor => {
+    if (isExternal(anchor.getAttribute("href"))) {
+      return
+    }
+
     anchor.addEventListener("click", event => {
       event.preventDefault()
       var hash = `#${gistId}/${anchor.getAttribute("href")}`
@@ -315,6 +319,10 @@ function handleInternalLinks() {
       window.history.pushState(null, null, document.location.pathname + hash)
     })
   })
+}
+
+function isExternal(href) {
+  return href.indexOf("://") > -1
 }
 
 //
