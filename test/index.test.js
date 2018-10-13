@@ -151,6 +151,44 @@ describe("init", () => {
       expect(document.getElementById("content").innerHTML).toContain("<p>Once upon a time Bob...</p>")
     })
   })
+
+  test("doesn't prevent default behavior of external and absolute links", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" }
+      }
+    })
+    const indexContent =
+      "Once upon a time... " +
+      "[external link](http://example.com) " +
+      "[absolute link](/path)"
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementById("content").innerHTML).toContain("Once upon a time...")
+
+      const originalHref = document.location.href
+      // Browse to an external page
+      document.querySelector("a[href='http://example.com']").click()
+      // Note: document.location.href doesn't change when a link is clicked, but
+      // it changes when a click listener has been added to the anchor
+      expect(document.location.href).toEqual(originalHref)
+
+      // Follow absolute link
+      document.querySelector("a[href='/path']").click()
+      expect(document.location.href).toEqual(originalHref)
+    })
+  })
 })
 
 describe("scene transition", () => {
