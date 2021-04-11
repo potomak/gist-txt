@@ -15,7 +15,7 @@ var currentScene
 var currentTrack
 var files
 var cache = {}
-var loaded = false
+var initialized = false
 window.state = {}
 
 import mustache from "mustache"
@@ -53,8 +53,8 @@ import parse from "./parse"
 //
 function init() {
   cache = {}
-  loaded = true
-  var [gId, scene] = parse(document.location.hash)
+  initialized = true
+  const [gId, scene] = parse(document.location.hash)
   gistId = gId
 
   if (isDev()) {
@@ -148,14 +148,16 @@ function loadAndRender(scene) {
     .then(handleInternalLinks)
     .then(basic.scrollTop)
     .then(() => {
-      var currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
-      var sceneStyle = document.getElementById(sceneStyleId(scene))
+      const currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
       if (currentSceneStyle) {
         basic.disable(currentSceneStyle)
       }
+
+      const sceneStyle = document.getElementById(sceneStyleId(scene))
       if (sceneStyle) {
         basic.enable(sceneStyle)
       }
+
       currentScene = scene
     })
     .catch(error => {
@@ -170,7 +172,7 @@ function loadAndRender(scene) {
 // original gist, is displayed.
 //
 function compileAndDisplayFooter() {
-  var source = document.querySelector("a#source")
+  const source = document.querySelector("a#source")
   source.setAttribute("href", `https://gist.github.com/${gistId}`)
   source.innerHTML = gistId
   basic.show(components.footer())
@@ -192,7 +194,7 @@ function getFileContent(filename) {
 // override global stylesheet rules.
 //
 function extractYFM(scene, content) {
-  var parsed = matter(content, {
+  const parsed = matter(content, {
     engines: { yaml: yaml.load.bind(yaml) }
   })
   if (parsed.data.style !== undefined) {
@@ -243,11 +245,11 @@ function playTrack(parsed) {
 function playSceneTrack(track) {
   // TODO: https://github.com/potomak/gist-txt/issues/34
   // Check audio support during initialization
-  var ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
-  var filename = `${track}.${ext}`
+  const ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
+  const filename = `${track}.${ext}`
 
   if (fileExists(filename)) {
-    var audio = new Audio()
+    const audio = new Audio()
     audio.autoplay = true
     audio.loop = true
     audio.src = fileURL(filename)
@@ -320,7 +322,7 @@ function handleInternalLinks() {
 
     anchor.addEventListener("click", event => {
       event.preventDefault()
-      var hash = `#${gistId}/${href}`
+      const hash = `#${gistId}/${href}`
       runScene(hash)
       window.history.pushState(null, null, document.location.pathname + hash)
     })
@@ -359,7 +361,7 @@ function runSceneInit(parsed) {
 // otherwise we can just render the current scene.
 //
 window.onpopstate = () => {
-  if (!loaded) {
+  if (!initialized) {
     return init()
   }
 
@@ -377,7 +379,7 @@ window.onpopstate = () => {
 // 2. loading and rendering the selected scene
 //
 function runScene(hash) {
-  var [gId, scene] = parse(hash)
+  const [gId, scene] = parse(hash)
   gistId = gId
   loadAndRender(scene)
 }

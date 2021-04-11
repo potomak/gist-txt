@@ -3,7 +3,7 @@
 //
 export default function(url) {
   return new Promise((resolve, reject) => {
-    var xhr = new XMLHttpRequest()
+    const xhr = new XMLHttpRequest()
     xhr.open("GET", url)
     xhr.onload = () => {
       if (xhr.status >= 200 && xhr.status < 300) {
