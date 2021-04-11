@@ -1,13 +1,14 @@
 //
-// Gist-txt is a minimal text adventure engine that helps game designers to
-// create text adventures from GitHub gists.
+// Gist-txt is a minimal game engine for creating text adventures and
+// interactive fiction. Games created with gist-txt are stored as GitHub gists
+// and hosted as HTML pages.
 //
-// To create a new text adventure just create a new public gist at
-// https://gist.github.com/ with at least a markdown file named
-// `index.markdown`. This will be the *main scene*: the starting point of the
-// adventure.
+// To create a new text adventure create a new public gist at
+// https://gist.github.com/ with at least one markdown file named
+// `index.markdown`. This will be the game *main scene*: the starting point of
+// your adventure.
 //
-// Get more info at https://github.com/potomak/gist-txt.
+// More info at https://github.com/potomak/gist-txt.
 //
 var gistId
 var currentScene
@@ -32,18 +33,20 @@ import parse from "./parse"
 //
 // ## Initialization
 //
-// During the initialization stage the hash portion of the path get parsed to
-// extract two main information:
+// During the initialization stage the fragment identifier, also called *hash*
+// in the source code, in the URL is parsed to extract two pieces of
+// information:
 //
 // 1. gist id
-// 1. scene name
+// 2. scene name
 //
-// Using the gist id a GET request to
-// https://developer.github.com/v3/gists/#get-a-single-gist is made to get
-// gist's data.
+// The gist id is used to make a GET request to
+// https://developer.github.com/v3/gists/#get-a-single-gist to get gist's data.
 //
-// If gist id is set to `DEV` the `files` variable is set to an arbitrary value
-// and subsequent requests will be sent to the `/dev` path.
+// When gist id is set to `DEV`, that is a conventional gist id used while
+// developing adventure games, responses cache is bypassed and all requests are
+// sent to `/dev`, that is a path in the local development server that maps to
+// the the `./dev` directory in the local file system.
 //
 // A successful response triggers the loading and rendering of the selected
 // scene.
@@ -77,8 +80,8 @@ function init() {
 // UI initialization consists of three steps:
 //
 // 1. global stylesheet application
-// 1. loading and rendering of the selected scene
-// 1. compilation and display of site footer
+// 2. loading and rendering of the selected scene
+// 3. compilation and display of site footer
 //
 function initUI(scene) {
   return applyStylesheet()
@@ -87,8 +90,8 @@ function initUI(scene) {
 }
 
 //
-// If gist's files include a `style.css` its content is used to determine the
-// overall CSS style for the story.
+// If gist's files include `style.css` its content is applied as the global CSS
+// for the story.
 //
 // The method returns a promise that is always resolved (the stylesheet is
 // optional).
@@ -102,30 +105,31 @@ function applyStylesheet() {
 //
 // ## Loading and rendering scenes
 //
-// Every scene is associated with a Markdown gist's file in the form:
+// Every scene is associated with a Markdown file called:
 //
 //     `${scene}.markdown`
 //
 // where `scene` is the name of the scene.
 //
-// The `cache` object is inspected to retrieve an already compiled scene file,
-// otherwise the *load and render* process include:
+// The `cache` object contains scene files that have been already fetched and
+// compiled. If the cache doesn't contain the requested scene the *load and
+// render* process includes:
 //
-// 1. getting the raw content of the file sending a GET request to file's
+// 1. getting the raw content of the file by sending a GET request to file's
 //   `raw_url`
-// 1. extracting YAML Front Matter and stores scene state in the `state` object
-// 1. storing a copy of the Markdown content in the `cache` object
-// 1. running a custom `init` function to initialize scene if present
-// 1. rendering the Mustache content
-// 1. rendering the Markdown content
-// 1. output the rendered content to the HTML `div#content` element
+// 2. extracting YAML Front Matter and storing scene state in the `state` object
+// 3. storing a copy of the Markdown content in the `cache` object
+// 4. running a custom `init` function to initialize scene if present
+// 5. rendering the Mustache content
+// 6. rendering the Markdown content
+// 7. writing the rendered content as the `div#content` element's inner HTML
 //
-// The process continues adding `click` handlers to link in the content, to
-// handle navigation between scenes.
+// Click event listeners are added to anchors elements in the content that link
+// to local resources. These custom listeners handle navigation between scenes.
 //
-// If everything goes well current scene name is associated to the global
-// variable `currentScene`, then previous scene's stylesheet is disactivated and
-// current scene's stylesheet is activated.
+// If everything goes well the current scene name is stored in the global
+// variable `currentScene`, the previous scene's stylesheet is disabled, and the
+// current scene's stylesheet is enabled.
 //
 function loadAndRender(scene) {
   basic.hide(components.error())
@@ -162,10 +166,8 @@ function loadAndRender(scene) {
 }
 
 //
-// If the gist response is successful the footer gets compiled and displayed to
-// show:
-//
-// * a link to the original gist
+// If the gist response is successful the footer, that includes a link to the
+// original gist, is displayed.
 //
 function compileAndDisplayFooter() {
   var source = document.querySelector("a#source")
@@ -186,7 +188,8 @@ function getFileContent(filename) {
 // data is used to extend the global `state`.
 //
 // If data's `style` property is defined, a `<style>` tag with the content of
-// the property is injected to override global stylesheet rules.
+// the property is injected in the page HTML. A scene's `style` can be used to
+// override global stylesheet rules.
 //
 function extractYFM(scene, content) {
   var parsed = matter(content, {
@@ -199,7 +202,7 @@ function extractYFM(scene, content) {
 }
 
 //
-// Scene's stylesheet `<style>` element has an `id` with the form:
+// A scene's stylesheet `<style>` element has an `id` with the form:
 //
 //     `${scene}-style`
 //
@@ -208,17 +211,18 @@ function sceneStyleId(scene) {
 }
 
 //
-// Play a track associated to the current scene.
+// Play an audio track associated to the current scene.
 //
-// If there's a track already playing it fades its volume and start playing the
-// current one.
+// If an audio track is already playing it fades its volume out and starts
+// playing the current one's.
 //
-// TODO: fade between tracks without (previously done using $.animate)
+// TODO: https://github.com/potomak/gist-txt/issues/33
+// Fade between tracks without jQuery (previously done using $.animate)
 //
 // Audio files should be included in two formats: ogg and mp3.
 //
-// To play a track in a scene add the `track` key to current scene's YAML
-// header and set its value to the name of the audio file without the
+// To play a track in a scene add the `track` property to the scene's YAML Front
+// Matter data and set its value to the name of the audio file without the
 // extension.
 //
 function playTrack(parsed) {
@@ -232,12 +236,13 @@ function playTrack(parsed) {
 }
 
 //
-// An helper function that creates a new `Audio` element with the `autoplay`
-// and `loop` attributes set to true and loads a file audio based on current
-// browser audio capabilities.
+// A helper function that creates a new `Audio` element with the `autoplay`
+// and `loop` attributes set to `true` and loads an audio file based on the
+// browser's audio capabilities.
 //
 function playSceneTrack(track) {
-  // TODO: check audio support during initialization
+  // TODO: https://github.com/potomak/gist-txt/issues/34
+  // Check audio support during initialization
   var ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
   var filename = `${track}.${ext}`
 
@@ -274,10 +279,10 @@ function outputContent(content) {
 }
 
 //
-// Caching content prevents waste of API calls and band for slow connections.
+// Caching content optimizes network traffic usage.
 //
-// The cache consists of a simple JavaScript object that contains gist's files
-// parsed content indexed by scene name.
+// The cache is implemented as a simple JavaScript object that contains gist's
+// files parsed content indexed by scene name.
 //
 function getScene(scene) {
   if (cache[scene] !== undefined) {
@@ -296,14 +301,14 @@ function getScene(scene) {
 // ## Scene navigation
 //
 // Internal links click events are overridden to handle navigation between
-// scenes of the text adventure.
+// scenes in the text adventure.
 //
 // `<a>` elements' `href` attribute is used to rewrite location's hash in the
 // form:
 //
 //     `#${gistId}/${href}`
 //
-// At every internal link click event a new state get pushed in the
+// At every internal link click event a new state is pushed in the
 // `window.history` object to allow navigation using back and forward buttons.
 //
 function handleInternalLinks() {
@@ -338,7 +343,7 @@ function updateGameState(parsed) {
 }
 
 //
-// Run a scene initialization function.
+// Runs a scene initialization function.
 //
 function runSceneInit(parsed) {
   if (parsed.data.init !== undefined) {
@@ -368,8 +373,8 @@ window.onpopstate = () => {
 //
 // Running a scene includes:
 //
-// 1. parsing location's hash to get scene's name
-// 1. load and render selected scene
+// 1. parsing location's hash to get the scene name
+// 2. loading and rendering the selected scene
 //
 function runScene(hash) {
   var [gId, scene] = parse(hash)
@@ -378,8 +383,11 @@ function runScene(hash) {
 }
 
 //
-// During development you can use the `DEV` special gist id to bypass requests
-// to the local development server to the `/dev` path.
+// During development you can use `DEV` as special gist id.
+//
+// When the development environment is used, requests will be sent to the `/dev`
+// path that is served by the local development server, instead of the public
+// Gist API.
 //
 function isDev() {
   return gistId === "DEV"
@@ -388,8 +396,8 @@ function isDev() {
 //
 // Returns a file's URL based on current environment.
 //
-// On development environment `fileURL` will just return a relative path to the
-// file inside the `dev` directory.
+// In the development environment `fileURL` will just return a relative path to
+// the file in the `dev` directory.
 //
 function fileURL(filename) {
   return isDev() ? `/dev/${filename}` : files[filename].raw_url
@@ -398,8 +406,8 @@ function fileURL(filename) {
 //
 // Returns true if a file exists in the selected gist.
 //
-// On development environment it will just return true to avoid needing an
-// index of all development files.
+// In the development environment it will just return `true` to avoid the need
+// for an index of all development files.
 //
 function fileExists(filename) {
   return isDev() || files[filename] !== undefined
@@ -419,6 +427,7 @@ function file(filename) {
 //
 // ## It's time to play
 //
-// Let's play by starting the engine at `document.ready` event.
+// Let's play by starting the engine as soon as the document content has been
+// loaded.
 //
 document.addEventListener("DOMContentLoaded", init)

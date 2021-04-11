@@ -20,7 +20,7 @@ function scrollTop() {
 }
 
 //
-// Appends a `<style>` element with `content` in the DOM's `<head>`.
+// Appends a `<style>` element with `content` to the DOM's `<head>`.
 //
 function appendStyle(content, attributes) {
   var style = document.createElement("style")

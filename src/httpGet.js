@@ -1,5 +1,5 @@
 //
-// Sends a HTTP GET request to url.
+// Sends a HTTP GET request to `url`.
 //
 export default function(url) {
   return new Promise((resolve, reject) => {

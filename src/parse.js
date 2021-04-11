@@ -6,9 +6,9 @@
 // To parse the hash:
 //
 // 1. remove the '#' refix
-// 1. split the remaining string by '/'
-// 1. assign the first *segment* to the global variable `gistId`
-// 1. join the remaining segments with '/'
+// 2. split the remaining string by '/'
+// 3. assign the first *segment* to the global variable `gistId`
+// 4. join the remaining segments with '/'
 //
 // Note: gists' files can't include the '/' character in the name so, even if
 // the remaining portion of the segments array is joined by '/', that array
