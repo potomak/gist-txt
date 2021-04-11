@@ -4,9 +4,6 @@ A minimal text adventure engine.
 
 [![Build Status](https://travis-ci.org/potomak/gist-txt.svg?branch=master)](https://travis-ci.org/potomak/gist-txt)
 
-This project has been inspired by [Twine](http://twinery.org/) and
-[bl.ocks.org](http://bl.ocks.org/).
-
 ## Usage
 
 Create a new public gist at https://gist.github.com/.
@@ -147,3 +144,8 @@ and open http://localhost:8080.
 If you want to develop your text adventure locally, you can use the special
 `DEV` gist id to tell the tool to search for project files inside the
 `/dist/dev` directory instead of making external HTTP requests.
+
+## Acknowledgements
+
+This project has been inspired by [Twine](http://twinery.org/) and
+[bl.ocks.org](http://bl.ocks.org/).
