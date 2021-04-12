@@ -217,12 +217,14 @@ function sceneStyleId(scene) {
 // extension.
 //
 function playTrack(parsed) {
-  if (parsed.data.track !== undefined) {
-    if (currentTrack !== undefined && !currentTrack.paused) {
-      currentTrack.pause()
-    } else {
-      playSceneTrack(parsed.data.track)
-    }
+  if (parsed.data.track === undefined) {
+    returns
+  }
+
+  if (currentTrack !== undefined && !currentTrack.paused) {
+    currentTrack.pause()
+  } else {
+    playSceneTrack(parsed.data.track)
   }
 }
 
