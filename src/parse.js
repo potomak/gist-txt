@@ -18,10 +18,10 @@
 // scene, otherwise return the scene name found.
 //
 export default function (hash) {
-  var path = hash.slice(1)
-  var segments = path.split("/")
-  var gistId = segments.shift()
-  var scene = segments.join("/")
+  const path = hash.slice(1)
+  const segments = path.split("/")
+  const gistId = segments.shift()
+  let scene = segments.join("/")
 
   if (scene === "") {
     scene = "index"

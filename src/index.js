@@ -13,9 +13,7 @@
 var gistId
 var currentScene
 var currentTrack
-var files
-var cache = {}
-var loaded = false
+var initialized = false
 window.state = {}
 
 import mustache from "mustache"
@@ -25,9 +23,10 @@ window.esprima = esprima
 import yaml from "js-yaml"
 import matter from "gray-matter"
 
+import cache from "./cache"
+import backend from "./backend"
 import basic from "./basic"
 import components from "./components"
-import httpGet from "./httpGet"
 import parse from "./parse"
 
 //
@@ -44,29 +43,26 @@ import parse from "./parse"
 // https://developer.github.com/v3/gists/#get-a-single-gist to get gist's data.
 //
 // When gist id is set to `DEV`, that is a conventional gist id used while
-// developing adventure games, responses cache is bypassed and all requests are
-// sent to `/dev`, that is a path in the local development server that maps to
-// the the `./dev` directory in the local file system.
+// developing adventure games, requests are sent to `/dev`, that is a path in
+// the local development server that maps to the the `./dev` directory in the
+// local file system.
 //
 // A successful response triggers the loading and rendering of the selected
 // scene.
 //
 function init() {
-  cache = {}
-  loaded = true
-  var [gId, scene] = parse(document.location.hash)
+  initialized = true
+  const [gId, scene] = parse(document.location.hash)
   gistId = gId
 
-  if (isDev()) {
-    files = {}
-    initUI(scene)
-    return
-  }
+  cache.invalidate()
 
-  return httpGet(`https://api.github.com/gists/${gistId}`)
-    .then(JSON.parse)
-    .then(gist => {
-      files = gist.files
+  const config = isDev()
+    ? {storage: "local", path: "/dev"}
+    : {storage: "gist", gistId}
+
+  return backend.init(config)
+    .then(() => {
       return initUI(scene)
     })
     .catch(error => {
@@ -97,7 +93,7 @@ function initUI(scene) {
 // optional).
 //
 function applyStylesheet() {
-  return getFileContent("style.css")
+  return backend.fetchFileContent("style.css")
     .then(content => basic.appendStyle(content, {}))
     .catch(() => true)
 }
@@ -111,14 +107,14 @@ function applyStylesheet() {
 //
 // where `scene` is the name of the scene.
 //
-// The `cache` object contains scene files that have been already fetched and
-// compiled. If the cache doesn't contain the requested scene the *load and
-// render* process includes:
+// A `cache` stores scene files that have been already fetched and compiled. If
+// the cache doesn't contain the requested scene the *load and render* process
+// includes:
 //
 // 1. getting the raw content of the file by sending a GET request to file's
 //   `raw_url`
 // 2. extracting YAML Front Matter and storing scene state in the `state` object
-// 3. storing a copy of the Markdown content in the `cache` object
+// 3. storing a copy of the Markdown content in `cache`
 // 4. running a custom `init` function to initialize scene if present
 // 5. rendering the Mustache content
 // 6. rendering the Markdown content
@@ -148,14 +144,16 @@ function loadAndRender(scene) {
     .then(handleInternalLinks)
     .then(basic.scrollTop)
     .then(() => {
-      var currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
-      var sceneStyle = document.getElementById(sceneStyleId(scene))
+      const currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
       if (currentSceneStyle) {
         basic.disable(currentSceneStyle)
       }
+
+      const sceneStyle = document.getElementById(sceneStyleId(scene))
       if (sceneStyle) {
         basic.enable(sceneStyle)
       }
+
       currentScene = scene
     })
     .catch(error => {
@@ -170,17 +168,10 @@ function loadAndRender(scene) {
 // original gist, is displayed.
 //
 function compileAndDisplayFooter() {
-  var source = document.querySelector("a#source")
+  const source = document.querySelector("a#source")
   source.setAttribute("href", `https://gist.github.com/${gistId}`)
   source.innerHTML = gistId
   basic.show(components.footer())
-}
-
-//
-// Sends a GET request to file's `raw_url` if it's present in the `files` list.
-//
-function getFileContent(filename) {
-  return file(filename).then(() => httpGet(fileURL(filename)))
 }
 
 //
@@ -192,7 +183,7 @@ function getFileContent(filename) {
 // override global stylesheet rules.
 //
 function extractYFM(scene, content) {
-  var parsed = matter(content, {
+  const parsed = matter(content, {
     engines: { yaml: yaml.load.bind(yaml) }
   })
   if (parsed.data.style !== undefined) {
@@ -243,16 +234,18 @@ function playTrack(parsed) {
 function playSceneTrack(track) {
   // TODO: https://github.com/potomak/gist-txt/issues/34
   // Check audio support during initialization
-  var ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
-  var filename = `${track}.${ext}`
+  const ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
+  const filename = `${track}.${ext}`
 
-  if (fileExists(filename)) {
-    var audio = new Audio()
+  // TODO: https://github.com/potomak/gist-txt/issues/35
+  // Fix autoplay. It doesn't work without user interaction.
+  backend.fileURL(filename).then(url => {
+    const audio = new Audio()
     audio.autoplay = true
     audio.loop = true
-    audio.src = fileURL(filename)
+    audio.src = url
     currentTrack = audio
-  }
+  })
 }
 
 //
@@ -271,30 +264,25 @@ function renderMarkdown(content) {
 }
 
 //
-// The HTML rendered content is the main content of the scene. It gets appended
-// to the `#content` element in the DOM.
+// The HTML rendered content is the main content of the scene. It replaces the
+// content of the `#content` element in the DOM.
 //
 function outputContent(content) {
   components.content().innerHTML = content
 }
 
 //
-// Caching content optimizes network traffic usage.
+// A cache layer that stores scene content optimizes network traffic usage.
 //
-// The cache is implemented as a simple JavaScript object that contains gist's
-// files parsed content indexed by scene name.
+// The cache contains gist's files parsed content indexed by scene name.
 //
 function getScene(scene) {
-  if (cache[scene] !== undefined) {
-    return Promise.resolve(cache[scene])
-  }
-
-  return getFileContent(`${scene}.markdown`)
-    .then(extractYFM.bind(this, scene))
-    .then(parsed => {
-      cache[scene] = parsed
-      return parsed
-    })
+  return cache.get(scene)
+    .catch(() =>
+      backend.fetchFileContent(`${scene}.markdown`)
+        .then(extractYFM.bind(this, scene))
+        .then(parsed => cache.set(scene, parsed))
+    )
 }
 
 //
@@ -320,7 +308,7 @@ function handleInternalLinks() {
 
     anchor.addEventListener("click", event => {
       event.preventDefault()
-      var hash = `#${gistId}/${href}`
+      const hash = `#${gistId}/${href}`
       runScene(hash)
       window.history.pushState(null, null, document.location.pathname + hash)
     })
@@ -359,13 +347,11 @@ function runSceneInit(parsed) {
 // otherwise we can just render the current scene.
 //
 window.onpopstate = () => {
-  if (!loaded) {
+  if (!initialized) {
     return init()
   }
 
-  if (files !== undefined) {
-    runScene(document.location.hash)
-  }
+  runScene(document.location.hash)
 }
 
 //
@@ -377,7 +363,7 @@ window.onpopstate = () => {
 // 2. loading and rendering the selected scene
 //
 function runScene(hash) {
-  var [gId, scene] = parse(hash)
+  const [gId, scene] = parse(hash)
   gistId = gId
   loadAndRender(scene)
 }
@@ -391,37 +377,6 @@ function runScene(hash) {
 //
 function isDev() {
   return gistId === "DEV"
-}
-
-//
-// Returns a file's URL based on current environment.
-//
-// In the development environment `fileURL` will just return a relative path to
-// the file in the `dev` directory.
-//
-function fileURL(filename) {
-  return isDev() ? `/dev/${filename}` : files[filename].raw_url
-}
-
-//
-// Returns true if a file exists in the selected gist.
-//
-// In the development environment it will just return `true` to avoid the need
-// for an index of all development files.
-//
-function fileExists(filename) {
-  return isDev() || files[filename] !== undefined
-}
-
-//
-// Returns a promise that resolves with a `file` object if the file exists and
-// rejects otherwise.
-//
-function file(filename) {
-  if (fileExists(filename)) {
-    return Promise.resolve(files[filename])
-  }
-  return Promise.reject("File not found")
 }
 
 //

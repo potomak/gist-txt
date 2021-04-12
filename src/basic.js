@@ -23,16 +23,15 @@ function scrollTop() {
 // Appends a `<style>` element with `content` to the DOM's `<head>`.
 //
 function appendStyle(content, attributes) {
-  var style = document.createElement("style")
-  var name
-  for (name in attributes) {
+  const style = document.createElement("style")
+  for (const name in attributes) {
     if (attributes.hasOwnProperty(name)) {
       style.setAttribute(name, attributes[name])
     }
   }
   style.setAttribute("type", "text/css")
   style.innerHTML = content
-  var head = document.querySelector("head")
+  const head = document.querySelector("head")
   head.append(style)
 }
 
@@ -40,8 +39,7 @@ function appendStyle(content, attributes) {
 // Extends object a with properties from object b, recursively.
 //
 function extend(a, b) {
-  var key
-  for (key in b) {
+  for (const key in b) {
     if (b.hasOwnProperty(key)) {
       if (typeof a[key] === "object" && typeof b[key] === "object") {
         extend(a[key], b[key])
