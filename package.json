@@ -9,7 +9,7 @@
     "lint": "eslint src/*.js test/*.js",
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch --info-verbosity verbose",
-    "serve": "http-server dist"
+    "serve": "http-server dist -c-1"
   },
   "repository": {
     "type": "git",
