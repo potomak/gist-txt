@@ -218,7 +218,7 @@ function sceneStyleId(scene) {
 //
 function playTrack(parsed) {
   if (parsed.data.track === undefined) {
-    returns
+    return
   }
 
   if (currentTrack !== undefined && !currentTrack.paused) {
