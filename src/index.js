@@ -24,7 +24,7 @@ import yaml from "js-yaml"
 import matter from "gray-matter"
 
 import cache from "./cache"
-import backend from "./backend"
+import backend from "./backend/index"
 import basic from "./basic"
 import components from "./components"
 import parse from "./parse"

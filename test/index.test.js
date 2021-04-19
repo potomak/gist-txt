@@ -1,4 +1,4 @@
-jest.mock("../src/httpGet")
+jest.mock("../src/backend/httpGet")
 
 // Register init to DOMContentLoaded event
 require("../src/index")
@@ -27,7 +27,7 @@ describe("init", () => {
   beforeEach(resetEnv)
 
   test("displays an error if the gist request fails", () => {
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation(() => Promise.reject("Test error"))
 
     // Dispatch the DOMContentLoaded event
@@ -47,7 +47,7 @@ describe("init", () => {
       }
     })
     const indexContent = "Once upon a time..."
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -75,7 +75,7 @@ describe("init", () => {
     })
     const indexContent = "Once upon a time..."
     const styleContent = "body { background-color: black; }"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -106,7 +106,7 @@ describe("init", () => {
       "style: '" + styleContent + "'\n" +
       "---\n\n" +
       "Once upon a time..."
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -136,7 +136,7 @@ describe("init", () => {
       "  hero: Bob\n" +
       "---\n\n" +
       "Once upon a time {{hero}}..."
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -163,7 +163,7 @@ describe("init", () => {
       "Once upon a time... " +
       "[external link](http://example.com) " +
       "[absolute link](/path)"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -204,7 +204,7 @@ describe("init", () => {
       "author: John Doe\n" +
       "---\n\n" +
       "Created by John Doe"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -243,7 +243,7 @@ describe("scene transition", () => {
     })
     const indexContent = "Once upon a time... [continue...](end)"
     const endContent = "The end"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -276,7 +276,7 @@ describe("scene transition", () => {
     })
     const indexContent = "Once upon a time... [continue...](end)"
     const endContent = "The end... [or not?](index)"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -325,7 +325,7 @@ describe("scene transition", () => {
       "style: 'body { background-color: green; }'\n" +
       "---\n\n" +
       "The end... [or not?](index)"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":
@@ -387,7 +387,7 @@ describe("scene transition", () => {
     const endContent =
       "{{#brave}}Everyone lived happily ever after.{{/brave}}\n" +
       "{{#evil}}No one lived happily ever after.{{/evil}}"
-    const httpGet = require("../src/httpGet")
+    const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
       case "http://gists/index.markdown":

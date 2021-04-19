@@ -4,27 +4,28 @@
 
 var client
 
-import backendGist from "./backendGist"
-import backendLocal from "./backendLocal"
+import gist from "./gist"
+import local from "./local"
 import httpGet from "./httpGet"
 
 //
 // Initializes the backend using the input configuration.
 //
-// The backend client is selected by switching on the `storage` configuration
-// property.
+// The backend client is selected depending on the storage type defined in the
+// `storage` configuration property.
 //
 function init(config) {
-  switch (config.storage) {
-  case "local":
-    client = backendLocal
-    break
-  case "gist":
-    client = backendGist
-    break
-  }
-
+  client = loadClient(config.storage)
   return client.init(config)
+}
+
+function loadClient(storageType) {
+  switch (storageType) {
+  case "local":
+    return local
+  case "gist":
+    return gist
+  }
 }
 
 //
