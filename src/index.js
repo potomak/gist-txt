@@ -164,14 +164,42 @@ function loadAndRender(scene) {
 }
 
 //
-// If the gist response is successful the footer, that includes a link to the
-// original gist, is displayed.
+// If the gist response is successful the footer will be displayed.
+//
+// The footer includes these information:
+//
+// * a link to the original gist
+// * a link to the credits page
 //
 function compileAndDisplayFooter() {
-  const source = document.querySelector("a#source")
+  const source = components.sourceLink()
   source.setAttribute("href", `https://gist.github.com/${gistId}`)
   source.innerHTML = gistId
+
+  creditsLink()
+
   basic.show(components.footer())
+}
+
+//
+// The credits page contains information about the authors of the text
+// adventure.
+//
+// Data for the credits page is stored in a the conventional `credits.markdown`
+// file. If the `author` property is present in the file's data header it will
+// be used as the content of the link in the footer.
+//
+function creditsLink() {
+  getScene("credits")
+    .then(parsed => {
+      const credits = components.creditsLink()
+      credits.setAttribute("href", "credits")
+      credits.addEventListener("click", sceneLinkClickListener.bind(this, "credits"))
+      if (parsed.data.author !== undefined) {
+        credits.innerHTML = parsed.data.author
+      }
+    })
+    .catch(() => true)
 }
 
 //
@@ -308,13 +336,15 @@ function handleInternalLinks() {
       return
     }
 
-    anchor.addEventListener("click", event => {
-      event.preventDefault()
-      const hash = `#${gistId}/${href}`
-      runScene(hash)
-      window.history.pushState(null, null, document.location.pathname + hash)
-    })
+    anchor.addEventListener("click", sceneLinkClickListener.bind(this, href))
   })
+}
+
+function sceneLinkClickListener(scene, event) {
+  event.preventDefault()
+  const hash = `#${gistId}/${scene}`
+  runScene(hash)
+  window.history.pushState(null, null, document.location.pathname + hash)
 }
 
 function isExternal(href) {

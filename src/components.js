@@ -14,9 +14,19 @@ function content() {
   return document.getElementById("content")
 }
 
+function sourceLink() {
+  return document.querySelector("a#source")
+}
+
+function creditsLink() {
+  return document.querySelector("a[rel='author']")
+}
+
 export default {
   error,
   loading,
   footer,
-  content
+  content,
+  sourceLink,
+  creditsLink
 }

@@ -8,11 +8,12 @@ const resetEnv = () => {
   document.head.innerHTML = ""
   // Set up our document body
   document.body.innerHTML =
-    "<div id=\"error\"></div>" +
-    "<div id=\"loading\">Loading...</div>" +
-    "<div id=\"content\"></div>" +
-    "<footer style=\"display: none\">" +
-    "  Source: <a id=\"source\"></a>" +
+    "<div id=\"error\"></div>\n" +
+    "<div id=\"loading\">Loading...</div>\n" +
+    "<div id=\"content\"></div>\n" +
+    "<footer style=\"display: none\">\n" +
+    "  Source: <a id=\"source\"></a>\n" +
+    "  by <a rel=\"author\"></a>\n" +
     "</footer>"
 
   // Reset document.location.hash
@@ -187,6 +188,45 @@ describe("init", () => {
       // Follow absolute link
       document.querySelector("a[href='/path']").click()
       expect(document.location.href).toEqual(originalHref)
+    })
+  })
+
+  test("displays a link to the credits page if credits.markdown is present", () => {
+    const gistContent = JSON.stringify({
+      files: {
+        "index.markdown": { raw_url: "http://gists/index.markdown" },
+        "credits.markdown": { raw_url: "http://gists/credits.markdown" }
+      }
+    })
+    const indexContent = "Once upon a time..."
+    const creditsContent =
+      "---\n" +
+      "author: John Doe\n" +
+      "---\n\n" +
+      "Created by John Doe"
+    const httpGet = require("../src/httpGet")
+    httpGet.default.mockImplementation((url) => {
+      switch (url) {
+      case "http://gists/index.markdown":
+        return Promise.resolve(indexContent)
+      case "http://gists/credits.markdown":
+        return Promise.resolve(creditsContent)
+      }
+      return Promise.resolve(gistContent)
+    })
+
+    // Dispatch the DOMContentLoaded event
+    document.dispatchEvent(new Event("DOMContentLoaded"))
+
+    return new Promise(process.nextTick).then(() => {
+      expect(document.getElementsByTagName("footer")[0].innerHTML)
+        .toContain("<a rel=\"author\" href=\"credits\">John Doe</a>")
+
+      // Open credits page
+      document.querySelector("a[rel=author]").click()
+    }).then(() => new Promise(process.nextTick)).then(() => {
+      expect(document.getElementById("content").innerHTML)
+        .toContain("Created by John Doe")
     })
   })
 })
