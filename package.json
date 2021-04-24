@@ -1,6 +1,6 @@
 {
   "name": "gist-txt",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "description": "A minimal text adventure engine",
   "browser": "dist/main.js",
   "scripts": {
@@ -8,7 +8,7 @@
     "doc": "docco src/index.js",
     "lint": "eslint src/*.js test/*.js",
     "build": "webpack --mode production",
-    "watch": "webpack --mode development --watch --info-verbosity verbose",
+    "watch": "webpack --mode development --watch",
     "serve": "http-server dist -c-1"
   },
   "repository": {
@@ -39,21 +39,20 @@
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
-    "babel-core": "^7.0.0-bridge.0",
     "babel-loader": "^8.0.4",
     "docco": "^0.8.0",
     "eslint": "^5.6.1",
     "eslint-plugin-jest": "^21.24.1",
-    "http-server": "^0.11.1",
-    "jest": "^23.6.0",
-    "webpack": "^4.20.2",
-    "webpack-cli": "^3.1.2"
+    "http-server": "^0.12.3",
+    "jest": "^26.6.3",
+    "webpack": "^5.35.1",
+    "webpack-cli": "^4.6.0"
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "esprima": "^4.0.1",
     "gray-matter": "^4.0.1",
-    "js-yaml": "^3.12.0",
+    "js-yaml": "^3.14.1",
     "marked": ">=0.7.0",
     "mustache": "^3.0.0"
   }

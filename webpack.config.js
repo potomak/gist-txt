@@ -13,12 +13,20 @@ module.exports = {
         exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
-          query: {
+          options: {
             presets: ['@babel/preset-env']
           }
         }
       }
     ]
+  },
+  // Fixes "Error: Can't resolve 'buffer'" in js-yaml
+  // Can be removed after upgrading to js-yaml >= 4.1
+  // See https://github.com/nodeca/js-yaml/commit/c15d424448108771708eb942515b06020ecfe84c
+  resolve: {
+    fallback: {
+      buffer: false
+    }
   },
   devtool: 'source-map'
 };
