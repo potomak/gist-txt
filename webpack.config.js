@@ -1,4 +1,5 @@
 var path = require('path');
+var webpack = require('webpack');
 
 module.exports = {
   entry: './src/index.js',
@@ -23,10 +24,12 @@ module.exports = {
   // Fixes "Error: Can't resolve 'buffer'" in js-yaml
   // Can be removed after upgrading to js-yaml >= 4.1
   // See https://github.com/nodeca/js-yaml/commit/c15d424448108771708eb942515b06020ecfe84c
-  resolve: {
-    fallback: {
-      buffer: false
-    }
-  },
+  // See also https://github.com/webpack/changelog-v5/issues/10
+  plugins: [
+    new webpack.ProvidePlugin({
+      Buffer: ["buffer", "Buffer"],
+      process: "process",
+    }),
+  ],
   devtool: 'source-map'
 };
