@@ -50,8 +50,8 @@ describe("init", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -78,10 +78,10 @@ describe("init", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
-      case "http://gists/style.css":
-        return Promise.resolve(styleContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/style.css":
+          return Promise.resolve(styleContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -109,8 +109,8 @@ describe("init", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -139,8 +139,8 @@ describe("init", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -166,8 +166,8 @@ describe("init", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -207,10 +207,10 @@ describe("init", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
-      case "http://gists/credits.markdown":
-        return Promise.resolve(creditsContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/credits.markdown":
+          return Promise.resolve(creditsContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -246,10 +246,10 @@ describe("scene transition", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
-      case "http://gists/end.markdown":
-        return Promise.resolve(endContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -279,10 +279,10 @@ describe("scene transition", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
-      case "http://gists/end.markdown":
-        return Promise.resolve(endContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -328,10 +328,10 @@ describe("scene transition", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
-      case "http://gists/end.markdown":
-        return Promise.resolve(endContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
       }
       return Promise.resolve(gistContent)
     })
@@ -390,14 +390,14 @@ describe("scene transition", () => {
     const httpGet = require("../src/backend/httpGet")
     httpGet.default.mockImplementation((url) => {
       switch (url) {
-      case "http://gists/index.markdown":
-        return Promise.resolve(indexContent)
-      case "http://gists/brave-knight.markdown":
-        return Promise.resolve(knightContent)
-      case "http://gists/evil-king.markdown":
-        return Promise.resolve(kingContent)
-      case "http://gists/end.markdown":
-        return Promise.resolve(endContent)
+        case "http://gists/index.markdown":
+          return Promise.resolve(indexContent)
+        case "http://gists/brave-knight.markdown":
+          return Promise.resolve(knightContent)
+        case "http://gists/evil-king.markdown":
+          return Promise.resolve(kingContent)
+        case "http://gists/end.markdown":
+          return Promise.resolve(endContent)
       }
       return Promise.resolve(gistContent)
     })
