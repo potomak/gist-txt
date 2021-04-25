@@ -2,7 +2,7 @@
 
 A minimal text adventure engine.
 
-[![Build Status](https://travis-ci.org/potomak/gist-txt.svg?branch=master)](https://travis-ci.org/potomak/gist-txt)
+![Build Status](https://github.com/potomak/gist-txt/actions/workflows/test.yml/badge.svg)
 
 ## Usage
 
