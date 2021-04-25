@@ -1,25 +1,41 @@
-function error() {
-  return document.getElementById("error")
+// @flow strict
+
+function requireElement(element: ?HTMLElement): HTMLElement {
+  if (element == null) {
+    throw new Error("Missing required element")
+  }
+  return element
 }
 
-function loading() {
-  return document.getElementById("loading")
+function requireAnchor(element: ?HTMLElement): HTMLAnchorElement {
+  if (element instanceof HTMLAnchorElement) {
+    return element
+  }
+  throw new Error("Element is not an anchor")
 }
 
-function footer() {
-  return document.querySelector("footer")
+function error(): HTMLElement {
+  return requireElement(document.getElementById("error"))
 }
 
-function content() {
-  return document.getElementById("content")
+function loading(): HTMLElement {
+  return requireElement(document.getElementById("loading"))
 }
 
-function sourceLink() {
-  return document.querySelector("a#source")
+function footer(): HTMLElement {
+  return requireElement(document.querySelector("footer"))
 }
 
-function creditsLink() {
-  return document.querySelector("a[rel='author']")
+function content(): HTMLElement {
+  return requireElement(document.getElementById("content"))
+}
+
+function sourceLink(): HTMLAnchorElement {
+  return requireAnchor(document.querySelector("a#source"))
+}
+
+function creditsLink(): HTMLAnchorElement {
+  return requireAnchor(document.querySelector("a[rel='author']"))
 }
 
 export default {

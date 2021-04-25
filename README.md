@@ -104,6 +104,34 @@ Generate documentation for the project by running:
 npm run doc
 ```
 
+## Testing
+
+There is a suite of tests you can execute by running:
+
+```sh
+npm test
+```
+
+## Type checker
+
+This project uses Flow for type checking the JS source code.
+
+You can run:
+
+```sh
+npm run flow
+```
+
+to verify that types check.
+
+## Linting
+
+Run:
+
+```
+npm run lint
+```
+
 ## Building the bundle
 
 Run:

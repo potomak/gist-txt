@@ -1,3 +1,19 @@
+// @flow strict
+
+type SceneMetadata = {
+  init: ?() => void,
+  track: ?string,
+  author: ?string,
+  // $FlowFixMe - Unclear type
+  state: ?{ [string]: any },
+  style: ?string
+}
+
+type SceneData = {
+  content: string,
+  data: SceneMetadata
+}
+
 //
 // Gist-txt is a minimal game engine for creating text adventures and
 // interactive fiction. Games created with gist-txt are stored as GitHub gists
@@ -10,15 +26,19 @@
 //
 // More info at https://github.com/potomak/gist-txt.
 //
-var gistId
-var currentScene
-var currentTrack
-var initialized = false
+var gistId: string
+var currentScene: string
+var currentTrack: ?Audio
+var initialized: boolean = false
 window.state = {}
 
+// $FlowFixMe - Untyped module
 import mustache from "mustache"
+// $FlowFixMe - Untyped module
 import marked from "marked"
+// $FlowFixMe - Untyped module
 import yaml from "js-yaml"
+// $FlowFixMe - Untyped module
 import matter from "gray-matter"
 
 import cache from "./cache"
@@ -48,7 +68,7 @@ import parse from "./parse"
 // A successful response triggers the loading and rendering of the selected
 // scene.
 //
-function init() {
+function init(): Promise<void> {
   initialized = true
   const [gId, scene] = parse(document.location.hash)
   gistId = gId
@@ -56,15 +76,15 @@ function init() {
   cache.invalidate()
 
   const config = isDev()
-    ? {storage: "local", path: "/dev"}
-    : {storage: "gist", gistId}
+    ? { storage: "local", path: "/dev" }
+    : { storage: "gist", gistId }
 
   return backend.init(config)
     .then(() => {
       return initUI(scene)
     })
-    .catch(error => {
-      components.error().innerHTML = `Error: ${error}`
+    .catch((error: Error) => {
+      components.error().innerHTML = `Error: ${error.toString()}`
       basic.show(components.error())
     })
     .finally(() => basic.hide(components.loading()))
@@ -77,7 +97,7 @@ function init() {
 // 2. loading and rendering of the selected scene
 // 3. compilation and display of site footer
 //
-function initUI(scene) {
+function initUI(scene: string): Promise<void> {
   return applyStylesheet()
     .then(loadAndRender.bind(this, scene))
     .then(compileAndDisplayFooter)
@@ -125,7 +145,7 @@ function applyStylesheet() {
 // variable `currentScene`, the previous scene's stylesheet is disabled, and the
 // current scene's stylesheet is enabled.
 //
-function loadAndRender(scene) {
+function loadAndRender(scene: string) {
   basic.hide(components.error())
   basic.show(components.loading())
 
@@ -143,19 +163,19 @@ function loadAndRender(scene) {
     .then(basic.scrollTop)
     .then(() => {
       const currentSceneStyle = document.getElementById(sceneStyleId(currentScene))
-      if (currentSceneStyle) {
+      if (currentSceneStyle instanceof HTMLStyleElement) {
         basic.disable(currentSceneStyle)
       }
 
       const sceneStyle = document.getElementById(sceneStyleId(scene))
-      if (sceneStyle) {
+      if (sceneStyle instanceof HTMLStyleElement) {
         basic.enable(sceneStyle)
       }
 
       currentScene = scene
     })
-    .catch(error => {
-      components.error().innerHTML = `Error: ${error}`
+    .catch((error: Error) => {
+      components.error().innerHTML = `Error: ${error.toString()}`
       basic.show(components.error())
     })
     .finally(() => basic.hide(components.loading()))
@@ -169,7 +189,7 @@ function loadAndRender(scene) {
 // * a link to the original gist
 // * a link to the credits page
 //
-function compileAndDisplayFooter() {
+function compileAndDisplayFooter(): void {
   const source = components.sourceLink()
   source.setAttribute("href", `https://gist.github.com/${gistId}`)
   source.innerHTML = gistId
@@ -189,12 +209,12 @@ function compileAndDisplayFooter() {
 //
 function creditsLink() {
   getScene("credits")
-    .then(parsed => {
+    .then(({ data: { author } }) => {
       const credits = components.creditsLink()
       credits.setAttribute("href", "credits")
       credits.addEventListener("click", sceneLinkClickListener.bind(this, "credits"))
-      if (parsed.data.author !== undefined) {
-        credits.innerHTML = parsed.data.author
+      if (author != null) {
+        credits.innerHTML = author
       }
     })
     .catch(() => true)
@@ -209,10 +229,10 @@ function creditsLink() {
 // override global stylesheet rules.
 //
 function extractYFM(scene, content) {
-  const parsed = matter(content, {
+  const parsed: SceneData = matter(content, {
     engines: { yaml: yaml.load.bind(yaml) }
   })
-  if (parsed.data.style !== undefined) {
+  if (parsed.data.style != null) {
     basic.appendStyle(parsed.data.style, { id: sceneStyleId(scene) })
   }
   return parsed
@@ -242,15 +262,15 @@ function sceneStyleId(scene) {
 // Matter data and set its value to the name of the audio file without the
 // extension.
 //
-function playTrack(parsed) {
-  if (parsed.data.track === undefined) {
+function playTrack({ data: { track } }): void {
+  if (track == null) {
     return
   }
 
-  if (currentTrack !== undefined && !currentTrack.paused) {
+  if (currentTrack != null && !currentTrack.paused) {
     currentTrack.pause()
   } else {
-    playSceneTrack(parsed.data.track)
+    playSceneTrack(track)
   }
 }
 
@@ -259,7 +279,7 @@ function playTrack(parsed) {
 // and `loop` attributes set to `true` and loads an audio file based on the
 // browser's audio capabilities.
 //
-function playSceneTrack(track) {
+function playSceneTrack(track: string): void {
   // TODO: https://github.com/potomak/gist-txt/issues/34
   // Check audio support during initialization
   const ext = (new Audio().canPlayType("audio/ogg; codecs=vorbis")) ? "ogg" : "mp3"
@@ -280,14 +300,14 @@ function playSceneTrack(track) {
 // Mustache content is rendered using game's global state (`window.state`) as
 // its view object.
 //
-function renderMustache(content) {
+function renderMustache(content: string): string {
   return mustache.render(content, window.state)
 }
 
 //
 // Markdown content is rendered.
 //
-function renderMarkdown(content) {
+function renderMarkdown(content: string): string {
   return marked(content)
 }
 
@@ -304,7 +324,7 @@ function outputContent(content) {
 //
 // The cache contains gist's files parsed content indexed by scene name.
 //
-function getScene(scene) {
+function getScene(scene): Promise<SceneData> {
   return cache.get(scene)
     .catch(() =>
       backend.fetchFileContent(`${scene}.markdown`)
@@ -330,43 +350,49 @@ function getScene(scene) {
 function handleInternalLinks() {
   components.content().querySelectorAll("a").forEach(anchor => {
     const href = anchor.getAttribute("href")
-    if (isExternal(href) || isAbsolute(href)) {
+    if (href == null || isExternal(href) || isAbsolute(href)) {
       return
     }
 
-    anchor.addEventListener("click", sceneLinkClickListener.bind(this, href))
+    anchor.addEventListener("click", (event: MouseEvent) =>
+      sceneLinkClickListener(href, event)
+    )
   })
 }
 
-function sceneLinkClickListener(scene, event) {
+function sceneLinkClickListener(scene: string, event: MouseEvent) {
   event.preventDefault()
   const hash = `#${gistId}/${scene}`
   runScene(hash)
   window.history.pushState(null, null, document.location.pathname + hash)
 }
 
-function isExternal(href) {
+function isExternal(href: string): boolean {
   return href.indexOf("://") > -1
 }
 
-function isAbsolute(href) {
+function isAbsolute(href: string): boolean {
   return href.startsWith("/")
 }
 
 //
 // Extends game state with current scene's state.
 //
-function updateGameState(parsed) {
-  basic.extend(window.state, parsed.data.state)
+function updateGameState({ data: { state } }) {
+  if (state == null) {
+    return
+  }
+  basic.extend(window.state, state)
 }
 
 //
 // Runs a scene initialization function.
 //
-function runSceneInit(parsed) {
-  if (parsed.data.init !== undefined) {
-    parsed.data.init()
+function runSceneInit({ data: { init } }) {
+  if (init == null) {
+    return
   }
+  init()
 }
 
 //

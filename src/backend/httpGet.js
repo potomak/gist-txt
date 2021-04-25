@@ -1,7 +1,9 @@
+// @flow strict
+
 //
 // Sends a HTTP GET request to `url`.
 //
-export default function(url) {
+export default function (url: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open("GET", url)

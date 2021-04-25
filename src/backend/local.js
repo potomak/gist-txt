@@ -1,8 +1,12 @@
+// @flow strict
+
 //
 // Local backend
 //
 
-var path
+export type Config = { storage: "local", path: string }
+
+var path: string
 
 //
 // Initializes the backend using the input configuration.
@@ -11,7 +15,7 @@ var path
 // the value of the `path` configuration property, that is the path in the local
 // development server from where content should be served.
 //
-function init(config) {
+function init(config: Config): Promise<void> {
   path = config.path
   return Promise.resolve()
 }
@@ -21,7 +25,7 @@ function init(config) {
 //
 // The URL is a path to the file served from a local development server.
 //
-function fileURL(filename) {
+function fileURL(filename: string): Promise<string> {
   return Promise.resolve(`${path}/${filename}`)
 }
 

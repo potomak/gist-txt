@@ -1,8 +1,15 @@
+// @flow strict
+
 //
 // Gist backend
 //
 
-var files
+export type Config = { storage: "gist", gistId: string }
+
+type File = { raw_url: string, ... }
+type Gist = { files: { [string]: File }, ... }
+
+var files: { [string]: File }
 
 import httpGet from "./httpGet"
 
@@ -17,25 +24,23 @@ import httpGet from "./httpGet"
 // a git repo. The list of file objects is stored in a dictionary indexed by
 // file name.
 //
-function init(config) {
+function init(config: Config): Promise<void> {
   return httpGet(`https://api.github.com/gists/${config.gistId}`)
     .then(JSON.parse)
-    .then(gist => {
-      files = gist.files
-    })
+    .then((gist: Gist) => { files = gist.files })
 }
 
 //
 // Returns the `raw_url` property of the file referenced by `filename`.
 //
-function fileURL(filename) {
+function fileURL(filename: string): Promise<string> {
   return file(filename).then(file => file.raw_url)
 }
 
 //
 // Returns true if a file exists in the selected gist.
 //
-function fileExists(filename) {
+function fileExists(filename: string): boolean {
   return files[filename] !== undefined
 }
 
@@ -43,7 +48,7 @@ function fileExists(filename) {
 // Returns a promise that resolves with a `file` object if the file exists or
 // rejects otherwise.
 //
-function file(filename) {
+function file(filename: string): Promise<File> {
   if (fileExists(filename)) {
     return Promise.resolve(files[filename])
   }

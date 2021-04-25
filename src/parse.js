@@ -1,3 +1,5 @@
+// @flow strict
+
 //
 // A gist-txt location hash has the form:
 //
@@ -17,7 +19,7 @@
 // If the scene name is blank return 'index', the default name of the main
 // scene, otherwise return the scene name found.
 //
-export default function (hash) {
+export default function (hash: string): [string, string] {
   const path = hash.slice(1)
   const segments = path.split("/")
   const gistId = segments.shift()

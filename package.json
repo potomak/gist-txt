@@ -1,6 +1,6 @@
 {
   "name": "gist-txt",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "A minimal text adventure engine",
   "browser": "dist/main.js",
   "scripts": {
@@ -9,7 +9,8 @@
     "lint": "eslint 'src/**/*.js' 'test/**/*.js'",
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
-    "serve": "http-server dist -c-1"
+    "serve": "http-server dist -c-1",
+    "flow": "flow"
   },
   "repository": {
     "type": "git",
@@ -37,12 +38,17 @@
   },
   "homepage": "https://github.com/potomak/gist-txt",
   "devDependencies": {
-    "@babel/core": "^7.1.2",
+    "@babel/cli": "^7.13.16",
+    "@babel/core": "^7.13.16",
     "@babel/preset-env": "^7.1.0",
+    "@babel/preset-flow": "^7.13.13",
+    "babel-eslint": "^10.1.0",
     "babel-loader": "^8.0.4",
     "docco": "^0.8.0",
-    "eslint": "^5.6.1",
+    "eslint": "^7.1.0",
+    "eslint-plugin-flowtype": "^5.7.2",
     "eslint-plugin-jest": "^21.24.1",
+    "flow-bin": "^0.149.0",
     "http-server": "^0.12.3",
     "jest": "^26.6.3",
     "webpack": "^5.35.1",

@@ -5,12 +5,15 @@ module.exports = {
     "es6": true
   },
   "plugins": [
-    "jest"
+    "jest",
+    "flowtype"
   ],
   "extends": [
     "eslint:recommended",
-    "plugin:jest/recommended"
+    "plugin:jest/recommended",
+    "plugin:flowtype/recommended"
   ],
+  "parser": "babel-eslint",
   "parserOptions": {
     "ecmaVersion": 2015,
     "sourceType": "module"
