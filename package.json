@@ -1,6 +1,6 @@
 {
   "name": "gist-txt",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "A minimal text adventure engine",
   "browser": "dist/main.js",
   "scripts": {
@@ -51,7 +51,6 @@
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "buffer": "^6.0.3",
-    "esprima": "^4.0.1",
     "gray-matter": "^4.0.1",
     "js-yaml": "^3.14.1",
     "marked": ">=0.7.0",

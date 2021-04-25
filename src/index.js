@@ -18,8 +18,6 @@ window.state = {}
 
 import mustache from "mustache"
 import marked from "marked"
-import esprima from "esprima"
-window.esprima = esprima
 import yaml from "js-yaml"
 import matter from "gray-matter"
 
