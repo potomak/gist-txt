@@ -6,7 +6,7 @@
   "scripts": {
     "test": "jest",
     "doc": "docco src/index.js",
-    "lint": "eslint src/*.js test/*.js",
+    "lint": "eslint 'src/**/*.js' 'test/**/*.js'",
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
     "serve": "http-server dist -c-1"
