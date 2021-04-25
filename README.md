@@ -112,8 +112,7 @@ Run:
 npm run build
 ```
 
-to build a minimized bundle that contains the main script (`gist-txt.js`) and
-all dependencies.
+to build a minimized bundle that contains the game engine all its dependencies.
 
 ### Development
 
