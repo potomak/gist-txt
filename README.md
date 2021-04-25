@@ -101,7 +101,7 @@ http://potomak.github.io/gist-txt/docs/gist-txt.html.
 Generate documentation for the project by running:
 
 ```sh
-npm run-script doc
+npm run doc
 ```
 
 ## Building the bundle
@@ -109,7 +109,7 @@ npm run-script doc
 Run:
 
 ```sh
-npm run-script build
+npm run build
 ```
 
 to build a minimized bundle that contains the main script (`gist-txt.js`) and
@@ -123,7 +123,7 @@ rebuild the bundle after any change to your code.
 Run:
 
 ```sh
-npm run-script watch
+npm run watch
 ```
 
 to build a development version of the bundle that includes source maps and to
@@ -134,7 +134,7 @@ automatically rebuild the bundle on code changes.
 Run the HTTP server:
 
 ```sh
-npm run-script serve
+npm run serve
 ```
 
 and open http://localhost:8080.
